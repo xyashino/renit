@@ -4,13 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormField } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
-import { useAuth } from '@/context/auth';
+import { useLogout } from '@/src/shared/auth/session';
 import { useProfileForm } from '@/lib/hooks/use-profile-form';
-import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Alert, View } from 'react-native';
 
 export function ProfileForm() {
-  const { logout } = useAuth();
+  const { logout } = useLogout();
+  const router = useRouter();
   const { form, onSubmit, isPending } = useProfileForm();
+
+  async function handleLogout() {
+    await logout();
+    Alert.alert('Wylogowano');
+    router.replace('/(auth)/sign-in');
+  }
 
   return (
     <Card>
@@ -61,7 +69,7 @@ export function ProfileForm() {
 
         <Separator />
 
-        <Button variant="destructive" className="h-12" onPress={logout}>
+        <Button variant="destructive" className="h-12" onPress={handleLogout}>
           <Text variant="small" className="text-destructive-foreground tracking-widest font-semibold">
             Wyloguj
           </Text>

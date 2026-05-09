@@ -1,11 +1,11 @@
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { deleteEquipment, getEquipment } from '@/services/equipment';
 import type { Equipment } from '@/types';
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 
 export function useMyEquipment() {
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const queryClient = useQueryClient();
 
   const { data: allEquipment = [] } = useSuspenseQuery({

@@ -1,11 +1,11 @@
 import { Text } from '@/components/ui/text';
 import { View } from 'react-native';
 
-type AuthBrandingProps = {
+type BrandingProps = {
   subtitle: string;
 };
 
-export function AuthBranding({ subtitle }: AuthBrandingProps) {
+export function Branding({ subtitle }: BrandingProps) {
   return (
     <View className="items-center gap-1">
       <Text variant="h2" className="text-foreground tracking-wide border-b-0 pb-0">

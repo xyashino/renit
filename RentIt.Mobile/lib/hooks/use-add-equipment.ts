@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { CATEGORIES, findStatusId } from '@/lib/constants/lookups';
 import { equipmentSchema, type EquipmentFormData } from '@/lib/schemas/equipment';
 import { createEquipment } from '@/services/equipment';
@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
 
 export function useAddEquipment() {
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const queryClient = useQueryClient();
 
   const form = useForm<EquipmentFormData>({

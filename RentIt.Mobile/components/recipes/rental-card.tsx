@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Text } from '@/components/ui/text';
 import { THEME } from '@/constants/theme';
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { formatDate } from '@/lib/utils/date';
 import { createReview } from '@/services/reviews';
 import type { Rental } from '@/types';
@@ -30,7 +30,7 @@ export function RentalCard({ rental, showReview, onPress }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const queryClient = useQueryClient();
 
   const statusName = rental.status?.key ?? 'unavailable';

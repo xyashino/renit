@@ -3,13 +3,13 @@ import { Text } from '@/components/ui/text';
 import { Link, type Href } from 'expo-router';
 import { View } from 'react-native';
 
-type AuthSwitchLinkProps = {
+type SwitchLinkProps = {
   prompt: string;
   cta: string;
   href: Href;
 };
 
-export function AuthSwitchLink({ prompt, cta, href }: AuthSwitchLinkProps) {
+export function SwitchLink({ prompt, cta, href }: SwitchLinkProps) {
   return (
     <View className="items-center gap-4">
       <Separator />

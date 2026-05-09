@@ -1,5 +1,5 @@
 
-import { FormInputSelect } from '@/components/auth/form-input-select';
+import { FormInputSelect } from '@/components/forms/form-input-select';
 import { FormInputItem } from '@/components/forms/form-input-item';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

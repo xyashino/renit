@@ -1,4 +1,4 @@
-import { PasswordInput } from '@/components/auth/password-input';
+import { PasswordInput } from '@/components/forms/password-input';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ComponentProps } from 'react';
 

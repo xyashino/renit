@@ -1,10 +1,10 @@
 import { Input } from '@/components/ui/input';
 import { THEME } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { cn } from "../../lib/utils";
 
 type PasswordInputProps = React.ComponentProps<typeof Input>;
 

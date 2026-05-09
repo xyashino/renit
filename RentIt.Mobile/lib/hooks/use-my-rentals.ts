@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { getRentals } from '@/services/rentals';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,7 +23,7 @@ function rentalStatusToTab(statusKey: string | undefined): RentalTab {
 export function useMyRentals() {
   const { status } = useLocalSearchParams<{ status?: string }>();
   const router = useRouter();
-  const { user } = useAuth();
+  const user = useCurrentUser();
 
   const activeTab: RentalTab =
     status === 'active' || status === 'pending' || status === 'history' ? status : 'active';

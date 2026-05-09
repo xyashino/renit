@@ -42,7 +42,7 @@ export function FormInputSelect({
         }}
       >
         <FormControl asChild>
-          <SelectTrigger className='w-full'>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
         </FormControl>

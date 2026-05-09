@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { findStatusId } from '@/lib/constants/lookups';
 import { newRentalSchema, type NewRentalFormData } from '@/lib/schemas/rental';
 import { daysBetween, parseDate } from '@/lib/utils/date';
@@ -17,7 +17,7 @@ function toYmd(date: Date): string {
 export function useNewRental() {
   const { equipmentId, id } = useLocalSearchParams<{ equipmentId?: string; id?: string }>();
   const router = useRouter();
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const targetEquipmentId = Number(equipmentId ?? id);
 
   const { data: equipment, isLoading: equipLoading } = useQuery({

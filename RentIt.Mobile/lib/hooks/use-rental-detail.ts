@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/auth';
+import { useCurrentUser } from '@/src/shared/auth/session';
 import { findStatusId } from '@/lib/constants/lookups';
 import { daysBetween } from '@/lib/utils/date';
 import { getRentalById, updateRentalStatus } from '@/services/rentals';
@@ -9,7 +9,7 @@ import { Alert } from 'react-native';
 export function useRentalDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
+  const user = useCurrentUser();
   const queryClient = useQueryClient();
   const rentalId = Number(id);
 
