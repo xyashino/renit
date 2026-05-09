@@ -1,0 +1,19 @@
+import { Text } from '@/components/ui/text';
+import { View } from 'react-native';
+
+type AuthBrandingProps = {
+  subtitle: string;
+};
+
+export function AuthBranding({ subtitle }: AuthBrandingProps) {
+  return (
+    <View className="items-center gap-1">
+      <Text variant="h2" className="text-foreground tracking-wide border-b-0 pb-0">
+        RentIT
+      </Text>
+      <Text variant="small" className="text-muted-foreground tracking-wide">
+        {subtitle}
+      </Text>
+    </View>
+  );
+}

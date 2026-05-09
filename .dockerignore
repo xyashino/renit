@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/node_modules
+**/.vs
+**/.vscode
+**/TestResults
+**/*.user
+**/*.suo
+**/logs
+**/npm-debug.log
+**/build
+**/dist
+**/.DS_Store
+**/Thumbs.db
