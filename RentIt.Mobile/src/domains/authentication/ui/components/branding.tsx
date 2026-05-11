@@ -1,4 +1,5 @@
 import { Text } from '@/components/ui/text';
+import { BRANDING } from '@authentication/constants';
 import { View } from 'react-native';
 
 type BrandingProps = {
@@ -9,7 +10,7 @@ export function Branding({ subtitle }: BrandingProps) {
   return (
     <View className="items-center gap-1">
       <Text variant="h2" className="text-foreground tracking-wide border-b-0 pb-0">
-        RentIT
+        {BRANDING.APP_TITLE}
       </Text>
       <Text variant="small" className="text-muted-foreground tracking-wide">
         {subtitle}

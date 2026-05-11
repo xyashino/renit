@@ -32,6 +32,10 @@ export function useIsAuthenticated(): boolean {
 }
 
 export function useLogout(): { logout: () => Promise<void> } {
-  const { logout } = useDomainAuth();
-  return { logout };
+  const { logoutMutation } = useDomainAuth();
+  return {
+    logout: async () => {
+      await logoutMutation.mutateAsync();
+    },
+  };
 }

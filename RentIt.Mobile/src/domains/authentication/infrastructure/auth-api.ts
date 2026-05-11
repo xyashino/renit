@@ -1,7 +1,7 @@
 import { apiClient } from '@/src/shared/api/client';
+import { MESSAGES } from '@authentication/constants';
 import type { AuthUser } from '@authentication/domain/session';
 
-/** Shape of the raw HTTP response — belongs to infrastructure, not domain. */
 export type AuthSessionResponse = { token: string } & AuthUser;
 
 function extractApiMessage(error: unknown, fallback: string): string {
@@ -20,7 +20,7 @@ export async function loginApi(email: string, password: string): Promise<AuthSes
   const { data, error } = await apiClient.POST('/api/auth/login', {
     body: { email, password },
   });
-  if (error) throw new Error(extractApiMessage(error, 'Logowanie nie powiodlo sie'));
+  if (error) throw new Error(extractApiMessage(error, MESSAGES.API_LOGIN_FAILED));
   return data as unknown as AuthSessionResponse;
 }
 
@@ -29,7 +29,6 @@ export type RegisterPayload = {
   lastName: string;
   email: string;
   password: string;
-  /** Required by the API. Not yet collected in the registration UI. */
   address?: string;
 };
 
@@ -43,6 +42,6 @@ export async function registerApi(body: RegisterPayload): Promise<AuthSessionRes
       address: body.address ?? '',
     },
   });
-  if (error) throw new Error(extractApiMessage(error, 'Rejestracja nie powiodla sie'));
+  if (error) throw new Error(extractApiMessage(error, MESSAGES.API_REGISTER_FAILED));
   return data as unknown as AuthSessionResponse;
 }

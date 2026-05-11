@@ -1,8 +1,7 @@
+import { AUTH_SESSION_QUERY_KEY } from '@authentication/constants';
 import { loginApi, registerApi, type RegisterPayload } from '@authentication/infrastructure/auth-api';
 import { clearStoredSession, writeStoredSession } from '@authentication/infrastructure/session-storage';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-import { AUTH_SESSION_QUERY_KEY } from './use-auth-session';
 
 export type SignUpPayload = Omit<RegisterPayload, 'address'>;
 
@@ -39,15 +38,5 @@ export function useAuthActions() {
     },
   });
 
-  return {
-    login: async (email: string, password: string) => {
-      await loginMutation.mutateAsync({ email, password });
-    },
-    signUp: async (data: SignUpPayload) => {
-      await signUpMutation.mutateAsync(data);
-    },
-    logout: async () => {
-      await logoutMutation.mutateAsync();
-    },
-  };
+  return { loginMutation, signUpMutation, logoutMutation };
 }

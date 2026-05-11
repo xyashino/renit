@@ -2,19 +2,15 @@ import { FormInputItem } from '@/components/forms/form-input-item';
 import { FormPasswordItem } from '@/components/forms/form-password-item';
 import { Form, FormField } from '@/components/ui/form';
 import { useSignIn } from '@authentication/application/hooks/use-sign-in';
-import { SwitchLink } from '@authentication/ui/components/switch-link';
+import { ROUTES, SIGN_IN_SCREEN } from '@authentication/constants';
 import { Branding } from '@authentication/ui/components/branding';
 import { CardShell } from '@authentication/ui/components/card-shell';
 import { SubmitButton } from '@authentication/ui/components/submit-button';
-import { useRouter } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { SwitchLink } from '@authentication/ui/components/switch-link';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignInScreen() {
-  const router = useRouter();
-  const { form, onSubmit, isPending } = useSignIn({
-    onSuccess: () => router.replace('/(tabs)'),
-    onError: (message) => Alert.alert('Blad logowania', message),
-  });
+  const { form, onSubmit, isPending } = useSignIn();
 
   return (
     <KeyboardAvoidingView
@@ -27,7 +23,7 @@ export function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View className="w-full max-w-[500px] self-center gap-6">
-          <Branding subtitle="Witaj ponownie" />
+          <Branding subtitle={SIGN_IN_SCREEN.BRANDING_SUBTITLE} />
           <CardShell>
             <Form {...form}>
               <FormField
@@ -35,8 +31,8 @@ export function SignInScreen() {
                 name="email"
                 render={({ field }) => (
                   <FormInputItem
-                    label="Adres e-mail"
-                    placeholder="uzytkownik@example.com"
+                    label={SIGN_IN_SCREEN.EMAIL_LABEL}
+                    placeholder={SIGN_IN_SCREEN.EMAIL_PLACEHOLDER}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -50,19 +46,19 @@ export function SignInScreen() {
                 name="password"
                 render={({ field }) => (
                   <FormPasswordItem
-                    label="Haslo"
+                    label={SIGN_IN_SCREEN.PASSWORD_LABEL}
                     {...field}
                   />
                 )}
               />
 
-              <SubmitButton label="Zaloguj sie" onPress={onSubmit} disabled={isPending} />
+              <SubmitButton label={SIGN_IN_SCREEN.SUBMIT_LABEL} onPress={onSubmit} disabled={isPending} />
             </Form>
           </CardShell>
           <SwitchLink
-            prompt="Nie masz konta?"
-            cta="Zarejestruj sie"
-            href="/(auth)/sign-up"
+            prompt={SIGN_IN_SCREEN.SWITCH_PROMPT}
+            cta={SIGN_IN_SCREEN.SWITCH_CTA}
+            href={ROUTES.SIGN_UP}
           />
         </View>
       </ScrollView>

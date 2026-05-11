@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { AuthSessionResponse } from '@authentication/infrastructure/auth-api';
 import type { AuthSession } from '@authentication/domain/session';
-
-export const AUTH_SESSION_STORAGE_KEY = 'rentit_auth';
+import { AUTH_SESSION_STORAGE_KEY } from '@authentication/constants';
+import type { AuthSessionResponse } from '@authentication/infrastructure/auth-api';
 
 export async function readStoredSession(): Promise<AuthSession | null> {
   const raw = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);

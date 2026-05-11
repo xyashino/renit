@@ -2,19 +2,15 @@ import { FormInputItem } from '@/components/forms/form-input-item';
 import { PasswordInput } from '@/components/forms/password-input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useSignUp } from '@authentication/application/hooks/use-sign-up';
+import { ROUTES, SIGN_UP_SCREEN } from '@authentication/constants';
 import { Branding } from '@authentication/ui/components/branding';
 import { CardShell } from '@authentication/ui/components/card-shell';
 import { SubmitButton } from '@authentication/ui/components/submit-button';
 import { SwitchLink } from '@authentication/ui/components/switch-link';
-import { useRouter } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignUpScreen() {
-  const router = useRouter();
-  const { form, onSubmit, isPending } = useSignUp({
-    onSuccess: () => router.replace('/(tabs)'),
-    onError: (message) => Alert.alert('Blad rejestracji', message),
-  });
+  const { form, onSubmit, isPending } = useSignUp();
 
   return (
     <KeyboardAvoidingView
@@ -27,7 +23,7 @@ export function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View className="w-full max-w-[500px] self-center gap-6">
-          <Branding subtitle="Utworz konto" />
+          <Branding subtitle={SIGN_UP_SCREEN.BRANDING_SUBTITLE} />
           <CardShell>
             <Form {...form}>
               <View className="flex-row gap-3">
@@ -37,8 +33,8 @@ export function SignUpScreen() {
                     name="firstName"
                     render={({ field }) => (
                       <FormInputItem
-                        label="Imie"
-                        placeholder="Jan"
+                        label={SIGN_UP_SCREEN.FIRST_NAME_LABEL}
+                        placeholder={SIGN_UP_SCREEN.FIRST_NAME_PLACEHOLDER}
                         autoCapitalize="words"
                         {...field}
                       />
@@ -51,8 +47,8 @@ export function SignUpScreen() {
                     name="lastName"
                     render={({ field }) => (
                       <FormInputItem
-                        label="Nazwisko"
-                        placeholder="Kowalski"
+                        label={SIGN_UP_SCREEN.LAST_NAME_LABEL}
+                        placeholder={SIGN_UP_SCREEN.LAST_NAME_PLACEHOLDER}
                         autoCapitalize="words"
                         {...field}
                       />
@@ -66,8 +62,8 @@ export function SignUpScreen() {
                 name="email"
                 render={({ field }) => (
                   <FormInputItem
-                    label="Adres e-mail"
-                    placeholder="jan@example.com"
+                    label={SIGN_UP_SCREEN.EMAIL_LABEL}
+                    placeholder={SIGN_UP_SCREEN.EMAIL_PLACEHOLDER}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -81,7 +77,7 @@ export function SignUpScreen() {
                 name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <FormItem>
-                    <FormLabel>Haslo</FormLabel>
+                    <FormLabel>{SIGN_UP_SCREEN.PASSWORD_LABEL}</FormLabel>
                     <FormControl asChild>
                       <PasswordInput
                         autoComplete="new-password"
@@ -100,7 +96,7 @@ export function SignUpScreen() {
                 name="confirmPassword"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <FormItem>
-                    <FormLabel>Potwierdz haslo</FormLabel>
+                    <FormLabel>{SIGN_UP_SCREEN.CONFIRM_PASSWORD_LABEL}</FormLabel>
                     <FormControl asChild>
                       <PasswordInput
                         autoComplete="new-password"
@@ -114,13 +110,13 @@ export function SignUpScreen() {
                 )}
               />
 
-              <SubmitButton label="Utworz konto" onPress={onSubmit} disabled={isPending} />
+              <SubmitButton label={SIGN_UP_SCREEN.SUBMIT_LABEL} onPress={onSubmit} disabled={isPending} />
             </Form>
           </CardShell>
           <SwitchLink
-            prompt="Masz juz konto?"
-            cta="Zaloguj sie"
-            href="/(auth)/sign-in"
+            prompt={SIGN_UP_SCREEN.SWITCH_PROMPT}
+            cta={SIGN_UP_SCREEN.SWITCH_CTA}
+            href={ROUTES.SIGN_IN}
           />
         </View>
       </ScrollView>

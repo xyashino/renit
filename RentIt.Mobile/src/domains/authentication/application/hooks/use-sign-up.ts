@@ -1,17 +1,14 @@
 import { useAuth } from '@authentication/application/auth-context';
 import { signUpSchema, type SignUpFormData } from '@authentication/application/schemas/auth';
+import { MESSAGES, ROUTES } from '@authentication/constants';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
+import { Alert } from 'react-native';
 
-type UseSignUpOptions = {
-  onSuccess?: () => void;
-  onError?: (message: string) => void;
-};
-
-export function useSignUp({ onSuccess, onError }: UseSignUpOptions = {}) {
-  const { signUp } = useAuth();
-  const [isPending, setIsPending] = useState(false);
+export function useSignUp() {
+  const router = useRouter();
+  const { signUpMutation } = useAuth();
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -24,17 +21,16 @@ export function useSignUp({ onSuccess, onError }: UseSignUpOptions = {}) {
     },
   });
 
-  const onSubmit = form.handleSubmit(async ({ confirmPassword: _omit, ...payload }) => {
-    setIsPending(true);
-    try {
-      await signUp(payload);
-      onSuccess?.();
-    } catch (error) {
-      onError?.(error instanceof Error ? error.message : 'Sprobuj ponownie');
-    } finally {
-      setIsPending(false);
-    }
+  const onSubmit = form.handleSubmit(({ confirmPassword: _omit, ...payload }) => {
+    signUpMutation.mutate(payload, {
+      onSuccess: () => router.replace(ROUTES.POST_AUTH),
+      onError: (error) =>
+        Alert.alert(
+          MESSAGES.ALERT_TITLE_SIGN_UP_ERROR,
+          error instanceof Error ? error.message : MESSAGES.GENERIC_RETRY,
+        ),
+    });
   });
 
-  return { form, onSubmit, isPending };
+  return { form, onSubmit, isPending: signUpMutation.isPending };
 }

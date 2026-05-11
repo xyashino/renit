@@ -1,8 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-
+import { AUTH_SESSION_QUERY_KEY } from '@authentication/constants';
 import { readStoredSession } from '@authentication/infrastructure/session-storage';
-
-export const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const;
+import { useQuery } from '@tanstack/react-query';
 
 export function useAuthSession() {
   return useQuery({
