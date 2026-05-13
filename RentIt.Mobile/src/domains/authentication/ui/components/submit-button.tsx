@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { Button } from '@/src/shared/ui/components/button';
+import { Text } from '@/src/shared/ui/components/text';
 
 type SubmitButtonProps = {
   label: string;

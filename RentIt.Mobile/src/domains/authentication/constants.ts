@@ -1,8 +1,6 @@
 import type { Href } from 'expo-router';
 
-export const AUTH_SESSION_STORAGE_KEY = 'rentit_auth';
-
-export const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const;
+export { AUTH_SESSION_QUERY_KEY, AUTH_SESSION_STORAGE_KEY } from '@/src/shared/auth/session';
 
 export const ROUTES = {
   POST_AUTH: '/(tabs)',

@@ -1,5 +1,5 @@
-import { API_BASE_URL } from '@/constants/config';
-import type { paths } from '@/types/api';
+import { API_BASE_URL } from '@/src/shared/constants/config';
+import type { paths } from './generated/api';
 import { getStoredAuthToken } from '@/src/shared/auth/token';
 import createClient from 'openapi-fetch';
 

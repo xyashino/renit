@@ -1,11 +1,1 @@
-export type AuthUser = {
-  userId: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-};
-
-export type AuthSession = {
-  token: string;
-  user: AuthUser;
-};
+export type { AuthSession, AuthUser } from '@/src/shared/auth/session';

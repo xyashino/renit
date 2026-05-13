@@ -8,8 +8,11 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "api:swagger": "curl -o services/swagger.json http://localhost:5113/openapi/v1.json",
-    "api:types": "openapi-typescript http://localhost:5113/openapi/v1.json -o types/api.d.ts"
+    "typecheck": "tsc --noEmit",
+    "api:prepare": "node -e \"require('fs').mkdirSync('src/shared/api/generated', { recursive: true })\"",
+    "api:swagger": "npm run api:prepare && curl -L http://localhost:5113/openapi/v1.json -o src/shared/api/generated/swagger.json",
+    "api:types": "npm run api:swagger && openapi-typescript src/shared/api/generated/swagger.json -o src/shared/api/generated/api.d.ts",
+    "api:generate": "npm run api:types"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

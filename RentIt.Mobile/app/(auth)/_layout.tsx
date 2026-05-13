@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { THEME } from '@/constants/theme';
+import { THEME } from '@/src/shared/constants/theme';
 
 export default function AuthLayout() {
   const { colorScheme = 'light' } = useColorScheme();

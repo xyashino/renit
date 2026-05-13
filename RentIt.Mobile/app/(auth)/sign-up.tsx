@@ -1,4 +1,4 @@
-import { SignUpScreen } from '@authentication/ui/screens/sign-up-screen';
+import { SignUpScreen } from '@/src/domains/authentication';
 
 export default function SignUpRoute() {
   return <SignUpScreen />;

@@ -1,6 +1,6 @@
-import { useAuth } from '@authentication/application/auth-context';
-import { signUpSchema, type SignUpFormData } from '@authentication/application/schemas/auth';
-import { MESSAGES, ROUTES } from '@authentication/constants';
+import { useAuthActions } from './use-auth-actions';
+import { signUpSchema, type SignUpFormData } from '../schemas/auth';
+import { MESSAGES, ROUTES } from '../../constants';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
@@ -8,7 +8,7 @@ import { Alert } from 'react-native';
 
 export function useSignUp() {
   const router = useRouter();
-  const { signUpMutation } = useAuth();
+  const { signUpMutation } = useAuthActions();
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),

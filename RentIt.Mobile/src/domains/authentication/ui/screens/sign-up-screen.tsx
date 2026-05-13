@@ -1,12 +1,12 @@
-import { FormInputItem } from '@/components/forms/form-input-item';
-import { PasswordInput } from '@/components/forms/password-input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useSignUp } from '@authentication/application/hooks/use-sign-up';
-import { ROUTES, SIGN_UP_SCREEN } from '@authentication/constants';
-import { Branding } from '@authentication/ui/components/branding';
-import { CardShell } from '@authentication/ui/components/card-shell';
-import { SubmitButton } from '@authentication/ui/components/submit-button';
-import { SwitchLink } from '@authentication/ui/components/switch-link';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/src/shared/ui/components/form';
+import { FormInputItem } from '@/src/shared/ui';
+import { useSignUp } from '../../application/hooks/use-sign-up';
+import { ROUTES, SIGN_UP_SCREEN } from '../../constants';
+import { Branding } from '../components/branding';
+import { CardShell } from '../components/card-shell';
+import { PasswordInput } from '../components/password-input';
+import { SubmitButton } from '../components/submit-button';
+import { SwitchLink } from '../components/switch-link';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignUpScreen() {

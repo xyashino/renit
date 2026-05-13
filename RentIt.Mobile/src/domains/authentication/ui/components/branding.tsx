@@ -1,5 +1,5 @@
-import { Text } from '@/components/ui/text';
-import { BRANDING } from '@authentication/constants';
+import { Text } from '@/src/shared/ui/components/text';
+import { BRANDING } from '../../constants';
 import { View } from 'react-native';
 
 type BrandingProps = {

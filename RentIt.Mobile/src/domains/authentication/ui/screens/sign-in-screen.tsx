@@ -1,12 +1,12 @@
-import { FormInputItem } from '@/components/forms/form-input-item';
-import { FormPasswordItem } from '@/components/forms/form-password-item';
-import { Form, FormField } from '@/components/ui/form';
-import { useSignIn } from '@authentication/application/hooks/use-sign-in';
-import { ROUTES, SIGN_IN_SCREEN } from '@authentication/constants';
-import { Branding } from '@authentication/ui/components/branding';
-import { CardShell } from '@authentication/ui/components/card-shell';
-import { SubmitButton } from '@authentication/ui/components/submit-button';
-import { SwitchLink } from '@authentication/ui/components/switch-link';
+import { Form, FormField } from '@/src/shared/ui/components/form';
+import { FormInputItem } from '@/src/shared/ui';
+import { useSignIn } from '../../application/hooks/use-sign-in';
+import { ROUTES, SIGN_IN_SCREEN } from '../../constants';
+import { Branding } from '../components/branding';
+import { CardShell } from '../components/card-shell';
+import { SubmitButton } from '../components/submit-button';
+import { SwitchLink } from '../components/switch-link';
+import { FormPasswordItem } from '../recipes';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignInScreen() {

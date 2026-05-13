@@ -1,5 +1,5 @@
-import { StartupSplashScreen } from '@/components/recipes/startup-splash-screen';
 import { useAuthSessionState } from '@/src/shared/auth/session';
+import { StartupSplashScreen } from '@/src/shared/ui';
 import { Redirect } from 'expo-router';
 
 export default function Index() {

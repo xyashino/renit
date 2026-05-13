@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { Button } from '@/src/shared/ui/components/button';
+import { Text } from '@/src/shared/ui/components/text';
 import { AuthProvider } from '@/src/shared/auth/session';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider, useQueryErrorResetBoundary } from '@tanstack/react-query';
@@ -9,7 +9,7 @@ import { useColorScheme } from 'nativewind';
 import React from "react";
 import { View } from 'react-native';
 import 'react-native-reanimated';
-import { THEME } from '../constants/theme';
+import { THEME } from '@/src/shared/constants/theme';
 import '../styles/global.css';
 
 const queryClient = new QueryClient({

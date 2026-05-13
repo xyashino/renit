@@ -8,6 +8,15 @@
       ],
       "@authentication/*": [
         "./src/domains/authentication/*",
+      ],
+      "@rentals/*": [
+        "./src/domains/rentals/*",
+      ],
+      "@equipment/*": [
+        "./src/domains/equipment/*",
+      ],
+      "@profile/*": [
+        "./src/domains/profile/*",
       ]
     }
   },

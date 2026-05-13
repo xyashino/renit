@@ -1,6 +1,6 @@
 import { apiClient } from '@/src/shared/api/client';
-import { MESSAGES } from '@authentication/constants';
-import type { AuthUser } from '@authentication/domain/session';
+import { MESSAGES } from '../constants';
+import type { AuthUser } from '../domain/session';
 
 export type AuthSessionResponse = { token: string } & AuthUser;
 

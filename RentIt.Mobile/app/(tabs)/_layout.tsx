@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
+import { THEME } from '@/src/shared/constants/theme';
 import { useColorScheme } from 'nativewind';
 
 export default function TabLayout() {

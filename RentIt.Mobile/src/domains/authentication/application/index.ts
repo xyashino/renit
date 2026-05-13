@@ -9,7 +9,7 @@ export {
   AUTH_SESSION_STORAGE_KEY,
   type Message,
   type Route,
-} from '@authentication/constants';
+} from '../constants';
 export { useAuthSession } from './hooks/use-auth-session';
 export { useAuthActions, type SignUpPayload } from './hooks/use-auth-actions';
 export { useSignIn } from './hooks/use-sign-in';

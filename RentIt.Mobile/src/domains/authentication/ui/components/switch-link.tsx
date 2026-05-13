@@ -1,5 +1,5 @@
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
+import { Separator } from '@/src/shared/ui/components/separator';
+import { Text } from '@/src/shared/ui/components/text';
 import { Link, type Href } from 'expo-router';
 import { View } from 'react-native';
 
