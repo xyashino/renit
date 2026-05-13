@@ -1,15 +1,11 @@
 import { Text } from '@/src/shared/ui/components/text';
-import { THEME } from '@/src/shared/constants/theme';
 import { cn } from '@/src/shared/utils';
-import { ErrorAlertRecipe, StartupSplashScreen } from '@/src/shared/ui';
+import { EmptyStateRecipe, ErrorAlertRecipe, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
 import { RENTAL_TABS, RENTALS_SCREEN, useMyRentals, type RentalTab } from '../../application';
-import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Suspense } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { RentalCard } from '../components/rental-card';
-
-const T = THEME.light;
 
 export function RentalsScreen() {
   return (
@@ -29,12 +25,13 @@ function RentalsScreenContent() {
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="bg-card px-6 pt-6 pb-5 border-b border-border">
-        <Text className="text-foreground text-2xl font-bold">{RENTALS_SCREEN.TITLE}</Text>
-        <Text className="text-muted-foreground text-sm mt-1">{RENTALS_SCREEN.SUBTITLE}</Text>
-      </View>
+      <ScreenHeader
+        className="px-6 pt-6"
+        title={RENTALS_SCREEN.TITLE}
+        description={RENTALS_SCREEN.SUBTITLE}
+      />
 
-      <View className="flex-row mx-6 mt-5 mb-2 bg-card border border-border rounded-xl overflow-hidden">
+      <View className="flex-row mx-6 mb-2 bg-card border border-border rounded-xl overflow-hidden">
         {RENTAL_TABS.map((tab, index) => (
           <Pressable
             key={tab.key}
@@ -65,19 +62,16 @@ function RentalsScreenContent() {
             onRetry={() => refetch()}
           />
         ) : rentals.length === 0 ? (
-          <View className="items-center py-12 gap-3">
-            <View className="bg-accent rounded-full w-16 h-16 items-center justify-center">
-              <MaterialIcons name="assignment" size={32} color={T['accent-foreground']} />
-            </View>
-            <Text className="text-foreground font-semibold text-base">{RENTALS_SCREEN.EMPTY_TITLE}</Text>
-            <Text className="text-muted-foreground text-sm text-center">
-              {activeTab === 'active'
+          <EmptyStateRecipe
+            title={RENTALS_SCREEN.EMPTY_TITLE}
+            description={
+              activeTab === 'active'
                 ? RENTALS_SCREEN.EMPTY_ACTIVE
                 : activeTab === 'pending'
                   ? RENTALS_SCREEN.EMPTY_PENDING
-                  : RENTALS_SCREEN.EMPTY_HISTORY}
-            </Text>
-          </View>
+                  : RENTALS_SCREEN.EMPTY_HISTORY
+            }
+          />
         ) : (
           rentals.map((rental) => (
             <RentalCard

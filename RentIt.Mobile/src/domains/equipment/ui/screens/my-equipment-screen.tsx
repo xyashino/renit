@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from '@/src/shared/ui/components/card';
 import { Separator } from '@/src/shared/ui/components/separator';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import { NotFoundRecipe, StartupSplashScreen } from '@/src/shared/ui';
+import { NotFoundRecipe, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
 import { useMyEquipment } from '../../application';
 import { type Equipment } from '../../domain';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -41,17 +41,12 @@ function MyEquipmentScreenContent() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-8">
-          <View className="flex-row items-center justify-between">
-            <Text variant="h3" className="text-foreground font-extrabold tracking-tight">
-              Mój sprzęt
-            </Text>
-            <Button className="rounded-md" onPress={() => router.push('/equipment/add')}>
-              <Text variant="small" className="text-primary-foreground">Dodaj</Text>
-            </Button>
-          </View>
-          <Text variant="muted" className="mt-2">Zarządzaj swoimi ogłoszeniami.</Text>
-        </View>
+        <ScreenHeader
+          title="Mój sprzęt"
+          description="Zarządzaj swoimi ogłoszeniami."
+          actionLabel="Dodaj"
+          onActionPress={() => router.push('/equipment/add')}
+        />
 
         {myEquipment.length === 0 ? (
           <NotFoundRecipe

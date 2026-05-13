@@ -1,6 +1,5 @@
-import { Text } from '@/src/shared/ui/components/text';
 import { getRentals } from '@/src/shared/api/rentals';
-import { ErrorAlertRecipe, RentalRow, StartupSplashScreen } from '@/src/shared/ui';
+import { EmptyStateRecipe, ErrorAlertRecipe, RentalRow, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
 import { getEquipmentById } from '../../infrastructure';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
@@ -36,12 +35,12 @@ function EquipmentRentalsScreenContent() {
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 80 }}
       >
-        <View className="mb-6 gap-1">
-          <Text className="text-foreground font-bold text-lg" numberOfLines={1}>
-            {equipment?.name ?? 'Rezerwacje sprzętu'}
-          </Text>
-          <Text className="text-muted-foreground text-sm">{equipmentRentals.length} rezerwacji</Text>
-        </View>
+        <ScreenHeader
+          className="mb-6"
+          title={equipment?.name ?? 'Rezerwacje sprzętu'}
+          description={`${equipmentRentals.length} rezerwacji`}
+          titleNumberOfLines={1}
+        />
 
         {isError ? (
           <ErrorAlertRecipe
@@ -50,12 +49,11 @@ function EquipmentRentalsScreenContent() {
             onRetry={() => refetch()}
           />
         ) : equipmentRentals.length === 0 ? (
-          <View className="items-center py-16 gap-3">
-            <Text className="text-foreground font-semibold text-base">Brak rezerwacji</Text>
-            <Text className="text-muted-foreground text-sm text-center">
-              Nikt jeszcze nie zarezerwował tego sprzętu.
-            </Text>
-          </View>
+          <EmptyStateRecipe
+            className="py-16"
+            title="Brak rezerwacji"
+            description="Nikt jeszcze nie zarezerwował tego sprzętu."
+          />
         ) : (
           <View className="gap-4">
             {equipmentRentals.map((rental) => (
