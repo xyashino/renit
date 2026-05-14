@@ -15,10 +15,13 @@ namespace RentIt.Server.Controllers;
 public class AuthController(AppDbContext db, IConfiguration config) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto)
     {
         if (await db.Users.AnyAsync(u => u.Email == dto.Email))
-            return Conflict(new { message = "Email jest już zajęty" });
+            return Conflict(new ErrorResponseDto { Message = "Email jest już zajęty" });
 
         var user = new User
         {
@@ -36,18 +39,28 @@ public class AuthController(AppDbContext db, IConfiguration config) : Controller
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto dto)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return Unauthorized(new { message = "Nieprawidłowy email lub hasło" });
+            return Unauthorized(new ErrorResponseDto { Message = "Nieprawidłowy email lub hasło" });
 
         return Ok(BuildResponse(user));
     }
 
     private AuthResponseDto BuildResponse(User user) =>
-        new(GenerateToken(user), user.Id, user.Email, user.FirstName, user.LastName);
+        new()
+        {
+            Token = GenerateToken(user),
+            UserId = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+        };
 
     private string GenerateToken(User user)
     {

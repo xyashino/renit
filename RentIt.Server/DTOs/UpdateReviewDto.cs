@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RentIt.Server.DTOs;
 
-public sealed class CreateReviewDto
+public sealed class UpdateReviewDto
 {
     [Range(1, 5)]
     public int Rating { get; set; }

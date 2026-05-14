@@ -3,4 +3,8 @@ using RentIt.Server.Models;
 
 namespace RentIt.Server.DTOs;
 
-public record UpdateRentalStatusDto([Required] ItemStatus Status);
+public sealed class UpdateRentalStatusDto
+{
+    [Required]
+    public ItemStatus Status { get; set; }
+}

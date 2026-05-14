@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RentIt.Server.DTOs;
 
-public sealed class RegisterDto
+public sealed class CreateUserDto
 {
     [Required]
     [MaxLength(100)]

@@ -11,7 +11,8 @@ namespace RentIt.Server.Controllers;
 public class ReviewsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetAll([FromQuery] int? equipmentId)
+    [ProducesResponseType<IEnumerable<ReviewDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ReviewDto>>> GetAll([FromQuery] int? equipmentId)
     {
         var query = db.Reviews
             .Include(r => r.Author)
@@ -24,8 +25,22 @@ public class ReviewsController(AppDbContext db) : ControllerBase
         return Ok(items.Select(ToDto));
     }
 
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<ReviewDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ReviewDto>> GetById(int id)
+    {
+        var review = await db.Reviews
+            .Include(r => r.Author)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        return review is null ? NotFound() : Ok(ToDto(review));
+    }
+
     [HttpPost]
-    public async Task<ActionResult<object>> Create([FromBody] CreateReviewDto dto)
+    [ProducesResponseType<ReviewDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ReviewDto>> Create([FromBody] CreateReviewDto dto)
     {
         var review = new Review
         {
@@ -43,10 +58,32 @@ public class ReviewsController(AppDbContext db) : ControllerBase
             .Include(r => r.Author)
             .FirstAsync(r => r.Id == review.Id);
 
-        return CreatedAtAction(nameof(GetAll), new { equipmentId = review.EquipmentId }, ToDto(created));
+        return CreatedAtAction(nameof(GetById), new { id = review.Id }, ToDto(created));
+    }
+
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateReviewDto dto)
+    {
+        var review = await db.Reviews.FindAsync(id);
+        if (review is null)
+            return NotFound();
+
+        review.Rating = dto.Rating;
+        review.Comment = dto.Comment;
+        review.AuthorId = dto.AuthorId;
+        review.EquipmentId = dto.EquipmentId;
+        review.RentalId = dto.RentalId;
+
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         var review = await db.Reviews.FindAsync(id);
@@ -58,23 +95,29 @@ public class ReviewsController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    private static object ToDto(Review r) => new
-    {
-        r.Id,
-        r.Rating,
-        r.Comment,
-        r.CreatedAt,
-        r.AuthorId,
-        r.EquipmentId,
-        r.RentalId,
-        Author = r.Author is null ? null : new
+    private static ReviewDto ToDto(Review r) =>
+        new()
         {
-            r.Author.Id,
-            r.Author.FirstName,
-            r.Author.LastName,
-            r.Author.Email,
-            r.Author.Address,
-            r.Author.CreatedAt,
-        }
-    };
+            Id = r.Id,
+            Rating = r.Rating,
+            Comment = r.Comment,
+            CreatedAt = r.CreatedAt,
+            AuthorId = r.AuthorId,
+            EquipmentId = r.EquipmentId,
+            RentalId = r.RentalId,
+            Author = ToUserDto(r.Author),
+        };
+
+    private static UserDto? ToUserDto(User? u) =>
+        u is null
+            ? null
+            : new UserDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                Email = u.Email,
+                Address = u.Address,
+                CreatedAt = u.CreatedAt,
+            };
 }

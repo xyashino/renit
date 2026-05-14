@@ -2,4 +2,13 @@ using RentIt.Server.Models;
 
 namespace RentIt.Server.DTOs;
 
-public record BlockedRangeDto(int RentalId, DateTime DateFrom, DateTime DateTo, ItemStatus Status);
+public sealed class BlockedRangeDto
+{
+    public int? RentalId { get; set; }
+    public int? AvailabilityBlockId { get; set; }
+    public DateTime DateFrom { get; set; }
+    public DateTime DateTo { get; set; }
+    public ItemStatus? Status { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+}

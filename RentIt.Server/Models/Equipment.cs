@@ -18,4 +18,6 @@ public class Equipment
     public User? Owner { get; set; }
     public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<FavoriteEquipment> FavoritedByUsers { get; set; } = new List<FavoriteEquipment>();
+    public ICollection<EquipmentAvailabilityBlock> AvailabilityBlocks { get; set; } = new List<EquipmentAvailabilityBlock>();
 }

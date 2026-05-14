@@ -3,7 +3,7 @@ using RentIt.Server.Models;
 
 namespace RentIt.Server.DTOs;
 
-public sealed class CreateRentalDto
+public sealed class UpdateRentalDto
 {
     [Required]
     public DateTime DateFrom { get; set; }

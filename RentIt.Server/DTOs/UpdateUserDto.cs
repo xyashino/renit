@@ -2,9 +2,21 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RentIt.Server.DTOs;
 
-public record UpdateUserDto(
-    [Required, MaxLength(100)] string FirstName,
-    [Required, MaxLength(100)] string LastName,
-    [Required, EmailAddress, MaxLength(256)] string Email,
-    [Required] string Address
-);
+public sealed class UpdateUserDto
+{
+    [Required]
+    [MaxLength(100)]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(100)]
+    public string LastName { get; set; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    [MaxLength(256)]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    public string Address { get; set; } = string.Empty;
+}

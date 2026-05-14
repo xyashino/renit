@@ -13,4 +13,6 @@ public class User
     public ICollection<Equipment> EquipmentItems { get; set; } = new List<Equipment>();
     public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
+    public ICollection<FavoriteEquipment> FavoriteEquipment { get; set; } = new List<FavoriteEquipment>();
 }
