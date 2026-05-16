@@ -1,4 +1,4 @@
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { addFavorite, getEquipmentById, getFavorites, removeFavorite } from '../../infrastructure';
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,7 +7,7 @@ import { Alert } from 'react-native';
 export function useProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const user = useCurrentUser();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const equipmentId = Number(id);
 

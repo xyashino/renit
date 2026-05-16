@@ -1,4 +1,4 @@
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { profileSchema, type ProfileFormData } from '../schemas/profile';
 import { getUser, updateUser } from '../../infrastructure/users-api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
 
 export function useProfileForm() {
-  const user = useCurrentUser();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: profile } = useQuery({

@@ -3,7 +3,7 @@ import { Card, CardContent, CardTitle } from '@/src/shared/ui/components/card';
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { Text } from '@/src/shared/ui/components/text';
 import { FormInputItem } from '@/src/shared/ui';
-import type { AccountType } from '@/src/domains/authentication/domain/account-type';
+import type { AccountType } from '@/src/shared/auth';
 import type { ProfileFormData } from '../../application/schemas/profile';
 import { AccountTypeInfo } from '../components/account-type-info';
 import type { UseFormReturn } from 'react-hook-form';

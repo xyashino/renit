@@ -1,4 +1,4 @@
-import { useCurrentUser, useIsOwner } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { getClientRentals, getOwnerRentals } from '../../infrastructure';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,8 +8,8 @@ import { filterRentalsByTab } from './rental-list-utils';
 export function useRentalsList() {
   const { status } = useLocalSearchParams<{ status?: string }>();
   const router = useRouter();
-  const user = useCurrentUser();
-  const isOwner = useIsOwner();
+  const { user } = useAuth();
+  const isOwner = user?.accountType === 'owner';
 
   const activeTab: RentalTab =
     status === 'active' || status === 'pending' || status === 'history' ? status : 'active';

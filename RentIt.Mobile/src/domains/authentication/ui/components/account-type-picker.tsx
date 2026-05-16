@@ -1,9 +1,30 @@
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
 import { cn } from '@/src/shared/utils';
-import { ACCOUNT_TYPE_PICKER_OPTIONS, type AccountType } from '../../constants';
+import type { AccountType } from '@/src/shared/auth/constants';
 import { MaterialIcons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { Pressable, View } from 'react-native';
+
+const ACCOUNT_TYPE_OPTIONS: {
+  value: AccountType;
+  title: string;
+  description: string;
+  icon: ComponentProps<typeof MaterialIcons>['name'];
+}[] = [
+  {
+    value: 'client',
+    title: 'Klient',
+    description: 'Przegladaj oferty i skladaj rezerwacje',
+    icon: 'person-search',
+  },
+  {
+    value: 'owner',
+    title: 'Wlasciciel',
+    description: 'Dodawaj sprzet i zarzadzaj rezerwacjami',
+    icon: 'storefront',
+  },
+];
 
 type AccountTypePickerProps = {
   value: AccountType | undefined;
@@ -17,7 +38,7 @@ export function AccountTypePicker({ value, onChange, disabled }: AccountTypePick
   return (
     <View className="gap-2">
       <View className="flex-row gap-3">
-        {ACCOUNT_TYPE_PICKER_OPTIONS.map((option) => {
+        {ACCOUNT_TYPE_OPTIONS.map((option) => {
           const selected = value === option.value;
           return (
             <Pressable

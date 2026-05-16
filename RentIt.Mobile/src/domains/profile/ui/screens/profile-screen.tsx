@@ -2,20 +2,20 @@ import { ScreenHeader } from '@/src/shared/ui';
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
 import { PROFILE_SCREEN, ROUTES } from '../../constants';
-import { useAccountType, useLogout } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { useRouter } from 'expo-router';
 import { useProfileForm } from '../../application/hooks/use-profile-form';
 import { ProfileForm } from '../recipes/profile-form';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function ProfileScreen() {
-  const accountType = useAccountType();
-  const { logout } = useLogout();
+  const { user, clearSession } = useAuth();
+  const accountType = user?.accountType ?? null;
   const router = useRouter();
   const { form, onSubmit, isPending } = useProfileForm();
 
   async function handleLogout() {
-    await logout();
+    await clearSession();
     router.replace(ROUTES.SIGN_IN);
     Alert.alert(PROFILE_SCREEN.LOGOUT_ALERT);
   }

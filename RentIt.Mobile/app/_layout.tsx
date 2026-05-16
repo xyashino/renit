@@ -1,6 +1,6 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
-import { AuthProvider } from '@/src/shared/auth/session';
+import { AuthProvider } from '@/src/shared/auth';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider, useQueryErrorResetBoundary } from '@tanstack/react-query';
 import { ErrorBoundaryProps, Stack } from 'expo-router';

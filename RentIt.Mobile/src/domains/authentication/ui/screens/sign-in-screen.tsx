@@ -1,13 +1,13 @@
-import { Form, FormField } from '@/src/shared/ui/components/form';
 import { FormInputItem } from '@/src/shared/ui';
+import { Form, FormField } from '@/src/shared/ui/components/form';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ROUTES } from '@/src/shared/auth/constants';
 import { useSignIn } from '../../application/hooks/use-sign-in';
-import { ROUTES } from '../../constants';
 import { Branding } from '../components/branding';
 import { CardShell } from '../components/card-shell';
 import { SubmitButton } from '../components/submit-button';
 import { SwitchLink } from '../components/switch-link';
 import { FormPasswordItem } from '../recipes/form-password-item';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignInScreen() {
   const { form, onSubmit, isPending } = useSignIn();

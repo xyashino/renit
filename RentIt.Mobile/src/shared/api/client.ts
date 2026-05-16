@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/src/shared/constants/config';
 import type { paths } from './generated/api';
-import { getStoredAuthToken } from '@/src/shared/auth/token';
+import { getStoredAuthToken } from '@/src/shared/auth/infrastructure/token';
 import createClient from 'openapi-fetch';
 
 export const apiClient = createClient<paths>({

@@ -1,15 +1,24 @@
-import { useAuthActions } from './use-auth-actions';
-import { signUpSchema, type SignUpFormData } from '../schemas/auth';
-import { MESSAGES } from '../../constants';
-import { getPostAuthRoute } from '../../domain/account-type';
+import { POST_AUTH_ROUTES } from '@/src/shared/auth/constants';
+import { useAuth } from '@/src/shared/auth';
+import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
+import { registerApi } from '../../infrastructure/auth-api';
+import type { RegisterPayload } from '../schemas/auth';
+import { signUpSchema, type SignUpFormData } from '../schemas/forms';
 
 export function useSignUp() {
   const router = useRouter();
-  const { signUpMutation } = useAuthActions();
+  const { setSession } = useAuth();
+
+  const signUpMutation = useMutation({
+    mutationFn: async (data: RegisterPayload) => {
+      const response = await registerApi(data);
+      return setSession(response);
+    },
+  });
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -27,11 +36,11 @@ export function useSignUp() {
     signUpMutation.mutate(
       { ...rest, accountType },
       {
-        onSuccess: (session) => router.replace(getPostAuthRoute(session.user.accountType)),
+        onSuccess: (session) => router.replace(POST_AUTH_ROUTES[session.user.accountType]),
         onError: (error) =>
           Alert.alert(
-            MESSAGES.ALERT_TITLE_SIGN_UP_ERROR,
-            error instanceof Error ? error.message : MESSAGES.GENERIC_RETRY,
+            'Blad rejestracji',
+            error instanceof Error ? error.message : 'Sprobuj ponownie',
           ),
       },
     );

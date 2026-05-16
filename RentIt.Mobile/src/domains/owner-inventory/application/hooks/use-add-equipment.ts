@@ -1,4 +1,4 @@
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { findStatusId } from '@/src/shared/domain';
 import { createEquipment } from '../../infrastructure/commands';
 import { getCategories } from '../../infrastructure/queries';
@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
 
 export function useAddEquipment() {
-  const user = useCurrentUser();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const form = useForm<EquipmentFormData>({

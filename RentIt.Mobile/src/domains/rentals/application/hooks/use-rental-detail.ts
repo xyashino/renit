@@ -1,4 +1,4 @@
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { daysBetween, findRentalStatusId, type RentalStatusKey } from '../../domain';
 import { getRentalById, updateRentalStatus } from '../../infrastructure';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ function parseRouteId(value: string | string[] | undefined): number | null {
 export function useRentalDetail() {
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
   const router = useRouter();
-  const user = useCurrentUser();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const rentalId = parseRouteId(id);
 

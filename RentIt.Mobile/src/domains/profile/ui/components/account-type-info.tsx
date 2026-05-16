@@ -1,7 +1,7 @@
 import { Badge } from '@/src/shared/ui/components/badge';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import type { AccountType } from '@/src/domains/authentication/domain/account-type';
+import type { AccountType } from '@/src/shared/auth';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';

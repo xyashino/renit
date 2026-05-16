@@ -1,5 +1,5 @@
 import { getEquipmentBlockedRanges } from '@/src/domains/equipment-catalog/infrastructure';
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { daysBetween, parseDate } from '@/src/shared/domain';
 import { Alert } from 'react-native';
 import { toLocalYmd, startOfToday } from '@/src/shared/utils/date';
@@ -32,7 +32,7 @@ function addDays(date: Date, days: number): Date {
 
 export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNewRentalOptions) {
   const router = useRouter();
-  const user = useCurrentUser();
+  const { user } = useAuth();
 
   const searchFromYmd = useMemo(() => toLocalYmd(startOfToday()), []);
   const searchToYmd = useMemo(

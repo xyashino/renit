@@ -4,7 +4,7 @@ import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
 import { ErrorAlertRecipe, NotFoundRecipe, StartupSplashScreen } from '@/src/shared/ui';
 import { BookingSection } from '@/src/domains/rentals';
-import { useIsClient } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import { useProductDetail } from '../../application';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
@@ -33,7 +33,8 @@ function ProductDetailScreenContent() {
   const { colorScheme = 'light' } = useColorScheme();
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = THEME[scheme];
-  const isClient = useIsClient();
+  const { user } = useAuth();
+  const isClient = user?.accountType === 'client';
 
   if (isError) {
     return (

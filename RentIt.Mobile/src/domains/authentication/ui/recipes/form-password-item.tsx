@@ -1,6 +1,6 @@
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/src/shared/ui/components/form';
-import { PasswordInput } from '../components/password-input';
 import { ComponentProps } from 'react';
+import { PasswordInput } from '../components/password-input';
 
 type Props = {
   label: string;

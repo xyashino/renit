@@ -1,4 +1,4 @@
-import { useCurrentUser } from '@/src/shared/auth/session';
+import { useAuth } from '@/src/shared/auth';
 import type { Equipment } from '@/src/shared/domain/equipment';
 import { equipmentDetailHref } from '../../constants';
 import { getFavorites } from '../../infrastructure';
@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 
 export function useFavoritesList() {
-  const user = useCurrentUser();
+  const { user } = useAuth();
   const router = useRouter();
 
   const { data: favorites = [], isError, refetch } = useSuspenseQuery({

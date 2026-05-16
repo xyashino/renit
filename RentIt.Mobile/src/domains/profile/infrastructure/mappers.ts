@@ -1,4 +1,4 @@
-import { accountTypeFromApi } from '@/src/domains/authentication/domain/account-type';
+import { accountTypeFromApi } from '@/src/shared/auth';
 import type { UserAccountType, UserProfile } from '../domain/user-profile';
 import { parseApiItem } from '@/src/shared/infrastructure/parse-api';
 import { userProfileDtoSchema, type UserProfileDto } from '../application/schemas/api';

@@ -1,4 +1,4 @@
-import { ROUTES as AUTH_ROUTES } from '@/src/domains/authentication/constants';
+import { ROUTES as AUTH_ROUTES } from '@/src/shared/auth';
 import type { Href } from 'expo-router';
 
 export type RentalTab = 'active' | 'pending' | 'history';
