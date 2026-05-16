@@ -6,8 +6,10 @@ export const ACCOUNT_TYPE = {
   owner: 1,
 } as const;
 
-export const AUTH_SESSION_STORAGE_KEY = 'rentit_auth';
-export const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const;
+export const AUTH_USER_QUERY_KEY = ['auth', 'user'] as const;
+
+/** SecureStore / AsyncStorage key for JWT used by apiClient Bearer interceptor */
+export const AUTH_TOKEN_STORAGE_KEY = 'rentit.auth.token';
 
 export const ROUTES = {
   SIGN_UP: '/(auth)/sign-up',

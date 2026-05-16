@@ -1,4 +1,4 @@
-import { FavoritesScreen } from '@/src/domains/equipment-catalog';
+import { FavoritesScreen } from '@/src/domains/equipment';
 
 export default function ClientFavoritesRoute() {
   return <FavoritesScreen />;

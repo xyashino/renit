@@ -1,5 +1,6 @@
 import type { Rental } from '../domain';
 import { apiClient } from '@/src/shared/api/client';
+import { extractApiMessage } from '@/src/shared/api/errors';
 import { parseRentalItem } from './mappers';
 
 export async function createRental(body: {
@@ -34,7 +35,9 @@ export async function updateRentalStatus(id: number, statusId: number): Promise<
     params: { path: { id } },
     body: { status: statusId } as never,
   });
-  if (error) throw new Error('Nie udało się zaktualizować statusu');
+  if (error) {
+    throw new Error(extractApiMessage(error, 'Nie udało się zaktualizować statusu'));
+  }
 }
 
 export async function deleteRental(id: number): Promise<void> {

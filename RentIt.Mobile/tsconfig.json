@@ -1,4 +1,4 @@
-{
+﻿{
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
@@ -12,11 +12,11 @@
       "@rentals/*": [
         "./src/domains/rentals/*",
       ],
-      "@equipment-catalog/*": [
-        "./src/domains/equipment-catalog/*",
+      "@equipment/*": [
+        "./src/domains/equipment/*",
       ],
-      "@owner-inventory/*": [
-        "./src/domains/owner-inventory/*",
+      "@inventory/*": [
+        "./src/domains/inventory/*",
       ],
       "@profile/*": [
         "./src/domains/profile/*",

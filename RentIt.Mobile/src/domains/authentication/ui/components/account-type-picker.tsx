@@ -1,7 +1,7 @@
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
 import { cn } from '@/src/shared/utils';
-import type { AccountType } from '@/src/shared/auth/constants';
+import type { AccountType } from '@/src/shared/auth';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Pressable, View } from 'react-native';

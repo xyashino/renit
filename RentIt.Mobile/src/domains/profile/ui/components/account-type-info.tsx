@@ -5,11 +5,23 @@ import type { AccountType } from '@/src/shared/auth';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
-import { PROFILE_ACCOUNT_TYPE } from '../../constants';
+
 
 type Props = {
   accountType: AccountType | null | undefined;
 };
+
+const ACCOUNT_TYPE_INFO = {
+  HINT: 'Typ konta nie może być zmieniony po rejestracji.',
+  client: {
+    badge: 'Konto klienta',
+    description: 'Przeglądasz oferty i składasz rezerwacje sprzętu.',
+  },
+  owner: {
+    badge: 'Konto właściciela',
+    description: 'Dodajesz sprzęt i zarządzasz rezerwacjami na swoje ogłoszenia.',
+  },
+} as const;
 
 export function AccountTypeInfo({ accountType }: Props) {
   const { colorScheme = 'light' } = useColorScheme();
@@ -17,7 +29,7 @@ export function AccountTypeInfo({ accountType }: Props) {
 
   if (!accountType) return null;
 
-  const copy = PROFILE_ACCOUNT_TYPE[accountType];
+  const copy = ACCOUNT_TYPE_INFO[accountType];
   const iconName = accountType === 'owner' ? 'storefront' : 'person';
 
   return (
@@ -32,7 +44,7 @@ export function AccountTypeInfo({ accountType }: Props) {
         {copy.description}
       </Text>
       <Text variant="small" className="text-muted-foreground text-xs">
-        {PROFILE_ACCOUNT_TYPE.HINT}
+        {ACCOUNT_TYPE_INFO.HINT}
       </Text>
     </View>
   );

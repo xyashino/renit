@@ -1,5 +1,5 @@
-import { EquipmentSearchScreen } from '@/src/domains/equipment-catalog';
+import { BrowseScreen } from '@/src/domains/equipment';
 
 export default function ClientBrowseRoute() {
-  return <EquipmentSearchScreen />;
+  return <BrowseScreen />;
 }

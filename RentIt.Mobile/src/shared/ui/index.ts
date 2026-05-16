@@ -1,3 +1,2 @@
-export * from './components';
 export * from './recipes';
-export * from './screens';
+export * from './screens/startup-splash-screen';

@@ -1,44 +1,48 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { sessionPayloadSchema } from '../application/schemas/api';
-import { AUTH_SESSION_STORAGE_KEY } from '../constants';
-import type { ApiSessionPayload, AuthSession } from '../domain/types';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import { AUTH_TOKEN_STORAGE_KEY } from '../constants';
 
-function toAuthSession(payload: ApiSessionPayload): AuthSession {
-  const { token, ...user } = payload;
-  return { token, user };
-}
+let cachedToken: string | null | undefined;
 
-export async function readStoredSession(): Promise<AuthSession | null> {
-  const raw = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
-  if (!raw) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
-    return null;
+async function readFromDevice(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
   }
+  return SecureStore.getItemAsync(AUTH_TOKEN_STORAGE_KEY);
+}
 
-  const result = sessionPayloadSchema.safeParse(parsed);
-  if (!result.success) {
-    await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
-    return null;
+async function writeToDevice(token: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+    return;
   }
-
-  return toAuthSession(result.data);
+  await SecureStore.setItemAsync(AUTH_TOKEN_STORAGE_KEY, token);
 }
 
-export async function readStoredAuthToken(): Promise<string | null> {
-  const session = await readStoredSession();
-  return session?.token ?? null;
+async function clearFromDevice(): Promise<void> {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+    return;
+  }
+  await SecureStore.deleteItemAsync(AUTH_TOKEN_STORAGE_KEY);
+  return;
 }
 
-export async function writeStoredSession(input: ApiSessionPayload): Promise<AuthSession> {
-  await AsyncStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(input));
-  return toAuthSession(input);
+export async function readAuthToken(): Promise<string | null> {
+  if (cachedToken !== undefined) {
+    return cachedToken;
+  }
+  cachedToken = await readFromDevice();
+  return cachedToken;
 }
 
-export async function clearStoredSession(): Promise<void> {
-  await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+export async function writeAuthToken(token: string): Promise<void> {
+  cachedToken = token;
+  await writeToDevice(token);
+}
+
+export async function clearAuthToken(): Promise<void> {
+  cachedToken = null;
+  await clearFromDevice();
 }

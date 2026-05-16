@@ -7,21 +7,3 @@ export const ROUTES = {
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
-export const PROFILE_SCREEN = {
-  TITLE: 'Profil',
-  DESCRIPTION: 'Twoje dane i ustawienia konta.',
-  LOGOUT_LABEL: 'Wyloguj',
-  LOGOUT_ALERT: 'Wylogowano',
-} as const;
-
-export const PROFILE_ACCOUNT_TYPE = {
-  HINT: 'Typ konta nie może być zmieniony po rejestracji.',
-  client: {
-    badge: 'Konto klienta',
-    description: 'Przeglądasz oferty i składasz rezerwacje sprzętu.',
-  },
-  owner: {
-    badge: 'Konto właściciela',
-    description: 'Dodajesz sprzęt i zarządzasz rezerwacjami na swoje ogłoszenia.',
-  },
-} as const;

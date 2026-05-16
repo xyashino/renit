@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPES } from '@/src/shared/auth/constants';
+import { ACCOUNT_TYPES } from '@/src/shared/auth';
 import { z } from 'zod';
 
 const accountTypeSchema = z.enum(ACCOUNT_TYPES, {

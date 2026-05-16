@@ -11,7 +11,7 @@
   },
   "aliases": {
     "components": "@/src/shared/ui/components",
-    "utils": "@/src/shared/utils",
+    "utils": "@/src/shared/utils/cn",
     "ui": "@/src/shared/ui/components",
     "lib": "@/src/shared",
     "hooks": "@/hooks"

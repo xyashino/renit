@@ -1,10 +1,10 @@
-import { getEquipmentBlockedRanges } from '@/src/domains/equipment-catalog/infrastructure';
+import { getEquipmentBlockedRanges } from '@/src/domains/equipment/infrastructure/queries';
 import { useAuth } from '@/src/shared/auth';
 import { daysBetween, parseDate } from '@/src/shared/domain';
 import { Alert } from 'react-native';
 import { toLocalYmd, startOfToday } from '@/src/shared/utils/date';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -32,6 +32,7 @@ function addDays(date: Date, days: number): Date {
 
 export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNewRentalOptions) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const searchFromYmd = useMemo(() => toLocalYmd(startOfToday()), []);
@@ -120,6 +121,8 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
       });
     },
     onSuccess: (rental) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment', equipmentId, 'blocked'] });
       router.replace(rentalConfirmedHref(rental.id));
     },
     onError: (error) => {

@@ -104,5 +104,6 @@ export const RENTAL_DETAIL_SCREEN = {
   FROM_LABEL: 'Od',
   TO_LABEL: 'Do',
   TOTAL_LABEL: 'Razem',
+  DEPOSIT_LABEL: 'Kaucja (przy odbiorze)',
   DAYS_SUFFIX: { one: 'dzień', few: 'dni', many: 'dni' },
 } as const;

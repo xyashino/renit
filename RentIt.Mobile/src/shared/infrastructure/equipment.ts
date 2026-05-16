@@ -128,7 +128,7 @@ function buildEquipmentListQuery(params?: EquipmentListQuery): Record<string, st
   return Object.keys(query).length > 0 ? query : undefined;
 }
 
-/** GET /api/equipment — używane przez equipment-catalog, owner-inventory, rentals. */
+/** GET /api/equipment — używane przez equipment, owner-inventory, rentals. */
 export async function loadEquipmentList(params?: EquipmentListQuery): Promise<Equipment[]> {
   const query = buildEquipmentListQuery(params);
   const { data, error } = await apiClient.GET('/api/equipment', {

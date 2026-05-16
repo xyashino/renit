@@ -2,6 +2,7 @@ import { useAuth } from '@/src/shared/auth';
 import { daysBetween, findRentalStatusId, type RentalStatusKey } from '../../domain';
 import { getRentalById, updateRentalStatus } from '../../infrastructure';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { confirmAction } from '@/src/shared/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 

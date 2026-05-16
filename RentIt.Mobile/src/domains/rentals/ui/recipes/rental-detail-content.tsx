@@ -1,6 +1,6 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Card, CardContent, CardTitle } from '@/src/shared/ui/components/card';
-import { EquipmentImage } from '@/src/shared/ui/components/equipment';
+import { Image } from '@/src/domains/equipment';
 import { Text } from '@/src/shared/ui/components/text';
 import { formatDate } from '@/src/shared/utils/date';
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -53,13 +53,14 @@ export function RentalDetailContent({
 }: Props) {
   const equipmentName = rental.equipment?.name?.trim() ?? `Sprzęt #${rental.equipmentId}`;
   const pricePerDay = rental.equipment?.pricePerDay ?? 0;
+  const deposit = rental.equipment?.deposit ?? 0;
   const dateFormat = { day: 'numeric' as const, month: 'long' as const, year: 'numeric' as const };
 
   return (
     <View className="gap-3">
       <Card className="py-0 overflow-hidden">
         <View className="h-36 bg-accent items-center justify-center overflow-hidden">
-          <EquipmentImage
+          <Image
             imageUrl={rental.equipment?.imageUrl}
             imageClassName="absolute inset-0"
             iconSize={32}
@@ -90,6 +91,12 @@ export function RentalDetailContent({
             label={`${days} ${daysLabel(days)} × ${pricePerDay} zł`}
             value={`${totalPrice} zł`}
           />
+          {deposit > 0 ? (
+            <DetailRow
+              label={RENTAL_DETAIL_SCREEN.DEPOSIT_LABEL}
+              value={`${deposit} zł`}
+            />
+          ) : null}
           <DetailRow label={RENTAL_DETAIL_SCREEN.TOTAL_LABEL} value={`${totalPrice} zł`} />
         </CardContent>
       </Card>

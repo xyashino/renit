@@ -2,8 +2,17 @@ import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
 import { AuthProvider } from '@/src/shared/auth';
 import { PortalHost } from '@rn-primitives/portal';
-import { QueryClient, QueryClientProvider, useQueryErrorResetBoundary } from '@tanstack/react-query';
-import { ErrorBoundaryProps, Stack } from 'expo-router';
+import { isUnauthorizedError } from '@/src/shared/api/errors';
+import { AUTH_USER_QUERY_KEY } from '@/src/shared/auth/constants';
+import { clearAuthToken } from '@/src/shared/auth/infrastructure/session-storage';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+  useQueryErrorResetBoundary,
+} from '@tanstack/react-query';
+import { ErrorBoundaryProps, router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import React from "react";
@@ -12,14 +21,37 @@ import 'react-native-reanimated';
 import { THEME } from '@/src/shared/constants/theme';
 import '../styles/global.css';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
+function handleQueryError(error: unknown, queryClient: QueryClient): void {
+  console.error(error);
+  if (!isUnauthorizedError(error)) return;
+
+  void (async () => {
+    await clearAuthToken();
+    queryClient.setQueryData(AUTH_USER_QUERY_KEY, null);
+    router.replace('/');
+  })();
+}
+
+function createQueryClient() {
+  const queryClient: QueryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30_000,
+        retry: 1,
+      },
     },
-  },
-});
+    queryCache: new QueryCache({
+      onError: (error) => handleQueryError(error, queryClient),
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => handleQueryError(error, queryClient),
+    }),
+  });
+
+  return queryClient;
+}
+
+const queryClient = createQueryClient();
 
 export default function RootLayout() {
   const { colorScheme = 'light' } = useColorScheme();

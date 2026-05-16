@@ -1,7 +1,7 @@
 import { FormInputItem } from '@/src/shared/ui';
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
-import { ROUTES } from '@/src/shared/auth/constants';
+import { ROUTES } from '@/src/shared/auth';
 import { useSignIn } from '../../application/hooks/use-sign-in';
 import { Branding } from '../components/branding';
 import { CardShell } from '../components/card-shell';
