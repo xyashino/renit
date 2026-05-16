@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Server.Data;
@@ -10,26 +12,36 @@ namespace RentIt.Server.Controllers;
 [Route("api/equipment")]
 public class EquipmentController(AppDbContext db) : ControllerBase
 {
+    private int? CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     [HttpGet]
     [ProducesResponseType<IEnumerable<EquipmentDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<EquipmentDto>>> GetAll(
         [FromQuery] string? city,
-        [FromQuery] EquipmentCategory? category,
+        [FromQuery] int? category,
         [FromQuery] DateTime? dateFrom,
         [FromQuery] DateTime? dateTo)
     {
         var query = db.Equipment
+            .Include(e => e.EquipmentCategories)
+                .ThenInclude(ec => ec.Category)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(city))
-            query = query.Where(e => e.Address.Contains(city));
+        {
+            var pattern = $"%{city.Trim()}%";
+            query = query.Where(e => EF.Functions.Like(e.Address, pattern));
+        }
 
         if (category.HasValue)
-            query = query.Where(e => e.Category == category.Value);
+            query = query.Where(e => e.EquipmentCategories.Any(ec => ec.CategoryId == category.Value));
 
         if (dateFrom.HasValue && dateTo.HasValue)
             query = query.Where(e =>
-                !e.Rentals.Any(r => r.DateFrom < dateTo.Value && dateFrom.Value < r.DateTo) &&
+                !e.Rentals.Any(r =>
+                    (r.Status == RentalStatus.Pending || r.Status == RentalStatus.Active) &&
+                    r.DateFrom < dateTo.Value && dateFrom.Value < r.DateTo) &&
                 !e.AvailabilityBlocks.Any(b => b.DateFrom < dateTo.Value && dateFrom.Value < b.DateTo));
 
         var items = await query.ToListAsync();
@@ -42,6 +54,8 @@ public class EquipmentController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<EquipmentDto>> GetById(int id)
     {
         var equipment = await db.Equipment
+            .Include(e => e.EquipmentCategories)
+                .ThenInclude(ec => ec.Category)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         return equipment is null ? NotFound() : Ok(ToDto(equipment));
@@ -63,7 +77,11 @@ public class EquipmentController(AppDbContext db) : ControllerBase
             return NotFound();
 
         var rentalRanges = await db.Rentals
-            .Where(r => r.EquipmentId == id && r.DateFrom < dateTo && dateFrom < r.DateTo)
+            .Where(r =>
+                r.EquipmentId == id &&
+                (r.Status == RentalStatus.Pending || r.Status == RentalStatus.Active) &&
+                r.DateFrom < dateTo &&
+                dateFrom < r.DateTo)
             .OrderBy(r => r.DateFrom)
             .Select(r => new BlockedRangeDto
             {
@@ -96,10 +114,19 @@ public class EquipmentController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType<EquipmentDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<EquipmentDto>> Create([FromBody] CreateEquipmentDto dto)
     {
+        if (CurrentUserId is null)
+            return Forbid();
+
+        var owner = await db.Users.FindAsync(CurrentUserId.Value);
+        if (owner is null || owner.AccountType != UserAccountType.Owner)
+            return Forbid();
+
         var equipment = new Equipment
         {
             Name = dto.Name,
@@ -107,23 +134,29 @@ public class EquipmentController(AppDbContext db) : ControllerBase
             ImageUrl = dto.ImageUrl,
             PricePerDay = dto.PricePerDay,
             Deposit = dto.Deposit,
-            Address = dto.Address,
-            UserId = dto.UserId,
-            Category = dto.Category,
+            Address = dto.Address?.Trim() ?? string.Empty,
+            UserId = CurrentUserId.Value,
             Status = dto.Status,
         };
 
         db.Equipment.Add(equipment);
         await db.SaveChangesAsync();
 
-        var created = await db.Equipment.FirstAsync(e => e.Id == equipment.Id);
+        await SyncCategories(equipment.Id, dto.CategoryIds);
+
+        var created = await db.Equipment
+            .Include(e => e.EquipmentCategories)
+                .ThenInclude(ec => ec.Category)
+            .FirstAsync(e => e.Id == equipment.Id);
 
         return CreatedAtAction(nameof(GetById), new { id = equipment.Id }, ToDto(created));
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEquipmentDto dto)
     {
@@ -133,22 +166,27 @@ public class EquipmentController(AppDbContext db) : ControllerBase
         if (equipment is null)
             return NotFound();
 
+        if (CurrentUserId != equipment.UserId)
+            return Forbid();
+
         equipment.Name = dto.Name;
         equipment.Description = dto.Description;
         equipment.ImageUrl = dto.ImageUrl;
         equipment.PricePerDay = dto.PricePerDay;
         equipment.Deposit = dto.Deposit;
-        equipment.Address = dto.Address;
-        equipment.UserId = dto.UserId;
-        equipment.Category = dto.Category;
+        equipment.Address = dto.Address?.Trim() ?? string.Empty;
         equipment.Status = dto.Status;
 
         await db.SaveChangesAsync();
+        await SyncCategories(equipment.Id, dto.CategoryIds);
+
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
@@ -156,9 +194,38 @@ public class EquipmentController(AppDbContext db) : ControllerBase
         if (equipment is null)
             return NotFound();
 
+        if (CurrentUserId != equipment.UserId)
+            return Forbid();
+
         db.Equipment.Remove(equipment);
         await db.SaveChangesAsync();
         return NoContent();
+    }
+
+    private async Task SyncCategories(int equipmentId, List<int> categoryIds)
+    {
+        var distinctIds = categoryIds.Distinct().ToList();
+
+        var validIds = await db.Categories
+            .Where(c => distinctIds.Contains(c.Id))
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var existing = await db.EquipmentCategories
+            .Where(ec => ec.EquipmentId == equipmentId)
+            .ToListAsync();
+
+        var toRemove = existing.Where(ec => !validIds.Contains(ec.CategoryId)).ToList();
+        if (toRemove.Count > 0)
+            db.EquipmentCategories.RemoveRange(toRemove);
+
+        var existingIds = existing.Select(ec => ec.CategoryId).ToHashSet();
+        var toAdd = validIds
+            .Where(id => !existingIds.Contains(id))
+            .Select(categoryId => new EquipmentCategory { EquipmentId = equipmentId, CategoryId = categoryId });
+
+        db.EquipmentCategories.AddRange(toAdd);
+        await db.SaveChangesAsync();
     }
 
     private static EquipmentDto ToDto(Equipment e) =>
@@ -172,7 +239,15 @@ public class EquipmentController(AppDbContext db) : ControllerBase
             Deposit = e.Deposit,
             Address = e.Address,
             UserId = e.UserId,
-            Category = e.Category,
             Status = e.Status,
+            Categories = e.EquipmentCategories
+                .Where(ec => ec.Category is not null)
+                .Select(ec => new CategoryDto
+                {
+                    Id = ec.Category!.Id,
+                    Name = ec.Category.Name,
+                    Key = ec.Category.Key,
+                })
+                .ToList(),
         };
 }

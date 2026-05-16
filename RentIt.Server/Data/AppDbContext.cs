@@ -8,10 +8,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<Equipment> Equipment => Set<Equipment>();
     public DbSet<Rental> Rentals => Set<Rental>();
-    public DbSet<Review> Reviews => Set<Review>();
-    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
     public DbSet<FavoriteEquipment> FavoriteEquipment => Set<FavoriteEquipment>();
     public DbSet<EquipmentAvailabilityBlock> EquipmentAvailabilityBlocks => Set<EquipmentAvailabilityBlock>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,20 +21,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(u => u.Email).HasMaxLength(256);
             e.Property(u => u.FirstName).HasMaxLength(100);
             e.Property(u => u.LastName).HasMaxLength(100);
-        });
-
-        modelBuilder.Entity<UserAddress>(e =>
-        {
-            e.Property(a => a.Name).HasMaxLength(100);
-            e.Property(a => a.Street).HasMaxLength(200);
-            e.Property(a => a.City).HasMaxLength(100);
-            e.Property(a => a.PostalCode).HasMaxLength(20);
-            e.Property(a => a.Country).HasMaxLength(100);
-
-            e.HasOne(a => a.User)
-                .WithMany(u => u.Addresses)
-                .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Equipment>(e =>
@@ -74,6 +60,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Category>(e =>
+        {
+            e.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            e.Property(c => c.Key).HasMaxLength(50).IsRequired();
+            e.HasIndex(c => c.Key).IsUnique();
+            e.HasIndex(c => c.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<EquipmentCategory>(e =>
+        {
+            e.HasKey(ec => new { ec.EquipmentId, ec.CategoryId });
+
+            e.HasOne(ec => ec.Equipment)
+                .WithMany(eq => eq.EquipmentCategories)
+                .HasForeignKey(ec => ec.EquipmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(ec => ec.Category)
+                .WithMany(c => c.EquipmentCategories)
+                .HasForeignKey(ec => ec.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<Rental>(e =>
         {
             e.HasOne(r => r.Client)
@@ -84,29 +93,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(r => r.Equipment)
                 .WithMany(eq => eq.Rentals)
                 .HasForeignKey(r => r.EquipmentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            e.HasOne(r => r.UserAddress)
-                .WithMany(a => a.Rentals)
-                .HasForeignKey(r => r.UserAddressId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<Review>(e =>
-        {
-            e.HasOne(r => r.Author)
-                .WithMany(u => u.Reviews)
-                .HasForeignKey(r => r.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            e.HasOne(r => r.Equipment)
-                .WithMany(eq => eq.Reviews)
-                .HasForeignKey(r => r.EquipmentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            e.HasOne(r => r.Rental)
-                .WithMany(rt => rt.Reviews)
-                .HasForeignKey(r => r.RentalId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

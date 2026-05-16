@@ -1,7 +1,8 @@
 export {
-  type Status,
-  type StatusKey,
-  STATUSES,
-  findStatusById,
-  findStatusId,
-} from '@/src/shared/domain';
+  type RentalStatus,
+  type RentalStatusKey,
+  RENTAL_STATUSES,
+  findRentalStatusById,
+  findRentalStatusId,
+  parseRentalStatusId,
+} from './rental-status';

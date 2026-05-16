@@ -41,6 +41,7 @@ public class Program
     private static void RegisterAuthenticationAndAuthorization(WebApplicationBuilder builder)
     {
         var jwtKey = builder.Configuration["Jwt:Key"]!;
+
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -62,11 +63,59 @@ public class Program
 
     private static void SetUpCorsPolicy(WebApplicationBuilder builder)
     {
+        var configuredOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ?? [];
+
+        var allowedOrigins = ResolveAllowedOrigins(builder, configuredOrigins);
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
-                policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            {
+                if (allowedOrigins.Length == 0)
+                {
+                    policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                    return;
+                }
+
+                policy.WithOrigins(allowedOrigins)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
         });
+    }
+
+    /// <summary>
+    /// Expo Web (8081/19006) and the API (5113) are different origins — list dev origins explicitly.
+    /// JWT is sent via Authorization header; credentials/cookies are not used.
+    /// </summary>
+    private static string[] ResolveAllowedOrigins(
+        WebApplicationBuilder builder,
+        string[] configuredOrigins)
+    {
+        if (configuredOrigins.Length > 0
+            && !configuredOrigins.Contains("*", StringComparer.OrdinalIgnoreCase))
+        {
+            return configuredOrigins;
+        }
+
+        if (builder.Environment.IsDevelopment())
+        {
+            return
+            [
+                "http://localhost:8081",
+                "http://127.0.0.1:8081",
+                "http://localhost:19006",
+                "http://127.0.0.1:19006",
+                "http://localhost:8082",
+                "http://127.0.0.1:8082",
+            ];
+        }
+
+        return configuredOrigins.Where(o => !string.Equals(o, "*", StringComparison.OrdinalIgnoreCase)).ToArray();
     }
 
     private static void ConfigureDevelopment(WebApplication app)

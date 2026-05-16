@@ -2,7 +2,7 @@ import { useAuth } from '@/src/shared/auth/session';
 import { loginApi, registerApi, type RegisterPayload } from '../../infrastructure/auth-api';
 import { useMutation } from '@tanstack/react-query';
 
-export type SignUpPayload = Omit<RegisterPayload, 'address'>;
+export type SignUpPayload = RegisterPayload;
 
 export function useAuthActions() {
   const { setSession, clearSession } = useAuth();

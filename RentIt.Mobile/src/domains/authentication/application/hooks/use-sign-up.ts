@@ -1,6 +1,7 @@
 import { useAuthActions } from './use-auth-actions';
 import { signUpSchema, type SignUpFormData } from '../schemas/auth';
-import { MESSAGES, ROUTES } from '../../constants';
+import { MESSAGES } from '../../constants';
+import { getPostAuthRoute } from '../../domain/account-type';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ export function useSignUp() {
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
+      accountType: undefined,
       firstName: '',
       lastName: '',
       email: '',
@@ -21,15 +23,18 @@ export function useSignUp() {
     },
   });
 
-  const onSubmit = form.handleSubmit(({ confirmPassword: _omit, ...payload }) => {
-    signUpMutation.mutate(payload, {
-      onSuccess: () => router.replace(ROUTES.POST_AUTH),
-      onError: (error) =>
-        Alert.alert(
-          MESSAGES.ALERT_TITLE_SIGN_UP_ERROR,
-          error instanceof Error ? error.message : MESSAGES.GENERIC_RETRY,
-        ),
-    });
+  const onSubmit = form.handleSubmit(({ confirmPassword: _omit, accountType, ...rest }) => {
+    signUpMutation.mutate(
+      { ...rest, accountType },
+      {
+        onSuccess: (session) => router.replace(getPostAuthRoute(session.user.accountType)),
+        onError: (error) =>
+          Alert.alert(
+            MESSAGES.ALERT_TITLE_SIGN_UP_ERROR,
+            error instanceof Error ? error.message : MESSAGES.GENERIC_RETRY,
+          ),
+      },
+    );
   });
 
   return { form, onSubmit, isPending: signUpMutation.isPending };

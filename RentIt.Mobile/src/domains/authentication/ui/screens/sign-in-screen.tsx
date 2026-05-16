@@ -1,12 +1,12 @@
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { FormInputItem } from '@/src/shared/ui';
 import { useSignIn } from '../../application/hooks/use-sign-in';
-import { ROUTES, SIGN_IN_SCREEN } from '../../constants';
+import { ROUTES } from '../../constants';
 import { Branding } from '../components/branding';
 import { CardShell } from '../components/card-shell';
 import { SubmitButton } from '../components/submit-button';
 import { SwitchLink } from '../components/switch-link';
-import { FormPasswordItem } from '../recipes';
+import { FormPasswordItem } from '../recipes/form-password-item';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function SignInScreen() {
@@ -23,7 +23,7 @@ export function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View className="w-full max-w-[500px] self-center gap-6">
-          <Branding subtitle={SIGN_IN_SCREEN.BRANDING_SUBTITLE} />
+          <Branding subtitle="Witaj ponownie" />
           <CardShell>
             <Form {...form}>
               <FormField
@@ -31,8 +31,8 @@ export function SignInScreen() {
                 name="email"
                 render={({ field }) => (
                   <FormInputItem
-                    label={SIGN_IN_SCREEN.EMAIL_LABEL}
-                    placeholder={SIGN_IN_SCREEN.EMAIL_PLACEHOLDER}
+                    label="Adres e-mail"
+                    placeholder="uzytkownik@example.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -46,18 +46,18 @@ export function SignInScreen() {
                 name="password"
                 render={({ field }) => (
                   <FormPasswordItem
-                    label={SIGN_IN_SCREEN.PASSWORD_LABEL}
+                    label="Haslo"
                     {...field}
                   />
                 )}
               />
 
-              <SubmitButton label={SIGN_IN_SCREEN.SUBMIT_LABEL} onPress={onSubmit} disabled={isPending} />
+              <SubmitButton label="Zaloguj sie" onPress={onSubmit} disabled={isPending} />
             </Form>
           </CardShell>
           <SwitchLink
-            prompt={SIGN_IN_SCREEN.SWITCH_PROMPT}
-            cta={SIGN_IN_SCREEN.SWITCH_CTA}
+            prompt="Nie masz konta?"
+            cta="Zarejestruj sie"
             href={ROUTES.SIGN_UP}
           />
         </View>

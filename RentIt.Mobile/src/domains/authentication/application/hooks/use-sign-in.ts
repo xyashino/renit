@@ -1,6 +1,7 @@
 import { useAuthActions } from './use-auth-actions';
 import { signInSchema, type SignInFormData } from '../schemas/auth';
-import { MESSAGES, ROUTES } from '../../constants';
+import { MESSAGES } from '../../constants';
+import { getPostAuthRoute } from '../../domain/account-type';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
@@ -19,7 +20,7 @@ export function useSignIn() {
     loginMutation.mutate(
       { email: data.email, password: data.password },
       {
-        onSuccess: () => router.replace(ROUTES.POST_AUTH),
+        onSuccess: (session) => router.replace(getPostAuthRoute(session.user.accountType)),
         onError: (error) =>
           Alert.alert(
             MESSAGES.ALERT_TITLE_SIGN_IN_ERROR,

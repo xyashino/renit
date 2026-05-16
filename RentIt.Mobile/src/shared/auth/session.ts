@@ -1,15 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, createElement, useCallback, useContext, type ReactNode } from 'react';
+import {
+  accountTypeFromApi,
+  type AccountType,
+} from '@/src/domains/authentication/domain/account-type';
+import { AUTH_SESSION_QUERY_KEY, AUTH_SESSION_STORAGE_KEY } from './session-keys';
 
-export const AUTH_SESSION_STORAGE_KEY = 'rentit_auth';
-export const AUTH_SESSION_QUERY_KEY = ['auth', 'session'] as const;
+export { AUTH_SESSION_QUERY_KEY, AUTH_SESSION_STORAGE_KEY } from './session-keys';
 
 export type AuthUser = {
   userId: number;
   email: string;
   firstName: string;
   lastName: string;
+  accountType: AccountType;
 };
 
 export type AuthSession = {
@@ -30,16 +35,25 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function normalizeSession(input: AuthSessionInput): AuthSession {
-  if ('user' in input) return input;
+  if ('user' in input) {
+    return {
+      token: input.token,
+      user: { ...input.user, accountType: accountTypeFromApi(input.user.accountType) },
+    };
+  }
   const { token, ...user } = input;
-  return { token, user };
+  return {
+    token,
+    user: { ...user, accountType: accountTypeFromApi(user.accountType) },
+  };
 }
 
 export async function readStoredSession(): Promise<AuthSession | null> {
   const raw = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as AuthSession;
+    const parsed = JSON.parse(raw) as AuthSession;
+    return normalizeSession(parsed);
   } catch {
     await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
     return null;
@@ -61,6 +75,16 @@ export async function clearStoredSession(): Promise<void> {
   await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
 }
 
+function isAuthSessionQuery(queryKey: readonly unknown[]): boolean {
+  return queryKey[0] === AUTH_SESSION_QUERY_KEY[0];
+}
+
+function clearUserQueryCache(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.removeQueries({
+    predicate: (query) => !isAuthSessionQuery(query.queryKey),
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const sessionQuery = useQuery({
@@ -72,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setSession = useCallback(
     async (input: AuthSessionInput) => {
       const session = await writeStoredSession(input);
+      clearUserQueryCache(queryClient);
       queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, session);
       return session;
     },
@@ -81,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearSession = useCallback(async () => {
     await clearStoredSession();
     queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
+    clearUserQueryCache(queryClient);
   }, [queryClient]);
 
   const session = sessionQuery.data ?? null;
@@ -133,4 +159,17 @@ export function useLogout(): { logout: () => Promise<void> } {
       await clearSession();
     },
   };
+}
+
+export function useAccountType(): AccountType | null {
+  const { user } = useAuth();
+  return user?.accountType ?? null;
+}
+
+export function useIsClient(): boolean {
+  return useAccountType() === 'client';
+}
+
+export function useIsOwner(): boolean {
+  return useAccountType() === 'owner';
 }

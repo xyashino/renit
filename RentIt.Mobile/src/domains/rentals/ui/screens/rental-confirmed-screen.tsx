@@ -2,6 +2,7 @@ import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
 import { StartupSplashScreen } from '@/src/shared/ui';
+import { RENTAL_CONFIRMED_SCREEN, ROUTES } from '../../constants';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
@@ -30,10 +31,10 @@ function RentalConfirmedScreenContent() {
       </View>
 
       <Text className="text-foreground text-2xl font-bold text-center mb-3">
-        Rezerwacja złożona!
+        {RENTAL_CONFIRMED_SCREEN.TITLE}
       </Text>
       <Text className="text-muted-foreground text-base text-center mb-2">
-        Twoja prośba o wypożyczenie została wysłana do właściciela.
+        {RENTAL_CONFIRMED_SCREEN.DESCRIPTION}
       </Text>
       <Text className="text-muted-foreground text-sm text-center mb-8">
         Rezerwacja #{rentalId} — oczekuje na potwierdzenie.
@@ -42,17 +43,21 @@ function RentalConfirmedScreenContent() {
       <View className="w-full gap-3">
         <Button
           className="w-full h-12 rounded-xl"
-          onPress={() => router.replace('/(tabs)/rentals')}
+          onPress={() => router.replace(ROUTES.CLIENT_RENTALS)}
         >
-          <MaterialIcons name="assignment" size={18} color="#fff" />
-          <Text className="text-primary-foreground font-semibold ml-2">Moje wypożyczenia</Text>
+          <MaterialIcons name="assignment" size={18} color={colors['primary-foreground']} />
+          <Text className="text-primary-foreground font-semibold ml-2">
+            {RENTAL_CONFIRMED_SCREEN.RENTALS_BUTTON}
+          </Text>
         </Button>
         <Button
           variant="outline"
           className="w-full h-12 rounded-xl"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={() => router.replace(ROUTES.CLIENT_HOME)}
         >
-          <Text className="text-foreground font-semibold">Powrót do przeglądania</Text>
+          <Text className="text-foreground font-semibold">
+            {RENTAL_CONFIRMED_SCREEN.BROWSE_BUTTON}
+          </Text>
         </Button>
       </View>
     </View>

@@ -1,3 +1,17 @@
 export type { Rental, RentalClient } from './rental';
-export { type Status, type StatusKey, STATUSES, findStatusById, findStatusId } from './status';
+export {
+  type RentalStatus,
+  type RentalStatusKey,
+  RENTAL_STATUSES,
+  findRentalStatusById,
+  findRentalStatusId,
+  parseRentalStatusId,
+} from './status';
 export { parseDate, daysBetween } from './duration';
+export {
+  type BlockedRange,
+  type RentalSlot,
+  computeAvailableSlots,
+  isRentalRangeAvailable,
+} from './availability';
+export { rentalPeriodFromDuration } from './rental-period';

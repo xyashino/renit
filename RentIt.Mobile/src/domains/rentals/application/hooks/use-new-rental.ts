@@ -1,99 +1,151 @@
+import { getEquipmentBlockedRanges } from '@/src/domains/equipment-catalog/infrastructure';
 import { useCurrentUser } from '@/src/shared/auth/session';
-import { getEquipmentPricing } from '@/src/shared/api/equipment';
-import { createRental } from '@/src/shared/api/rentals';
-import { findStatusId } from '@/src/shared/domain';
-import { newRentalSchema, type NewRentalFormData } from '../schemas/rental';
-import { daysBetween, parseDate } from '../../domain';
+import { daysBetween, parseDate } from '@/src/shared/domain';
+import { Alert } from 'react-native';
+import { toLocalYmd, startOfToday } from '@/src/shared/utils/date';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert } from 'react-native';
+import {
+  RENTAL_BOOKING_HORIZON_DAYS,
+  RENTAL_DURATION_OPTIONS,
+  rentalConfirmedHref,
+} from '../../constants';
+import { computeAvailableSlots } from '../../domain/availability';
+import { rentalPeriodFromDuration } from '../../domain/rental-period';
+import { createRental } from '../../infrastructure';
+import { newRentalSchema, type NewRentalFormData } from '../schemas/rental';
 
 type UseNewRentalOptions = {
-  equipmentId?: number;
-  pricePerDay?: number;
+  equipmentId: number;
+  pricePerDay: number;
+  pickupAddress: string;
 };
 
-function toYmd(date: Date): string {
-  return date.toISOString().split('T')[0]!;
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
-export function useNewRental(options: UseNewRentalOptions = {}) {
-  const { equipmentId, id } = useLocalSearchParams<{ equipmentId?: string; id?: string }>();
+export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNewRentalOptions) {
   const router = useRouter();
   const user = useCurrentUser();
-  const targetEquipmentId = options.equipmentId ?? Number(equipmentId ?? id);
-  const providedEquipment =
-    options.pricePerDay != null
-      ? { id: targetEquipmentId, pricePerDay: options.pricePerDay }
-      : undefined;
 
-  const { data: fetchedEquipment, isLoading: equipLoading } = useQuery({
-    queryKey: ['equipment', targetEquipmentId, 'pricing'],
-    queryFn: () => getEquipmentPricing(targetEquipmentId),
-    enabled: providedEquipment == null && !isNaN(targetEquipmentId),
-  });
-  const equipment = providedEquipment ?? fetchedEquipment;
+  const searchFromYmd = useMemo(() => toLocalYmd(startOfToday()), []);
+  const searchToYmd = useMemo(
+    () => toLocalYmd(addDays(startOfToday(), RENTAL_BOOKING_HORIZON_DAYS)),
+    []
+  );
 
   const form = useForm<NewRentalFormData>({
     resolver: zodResolver(newRentalSchema),
-    defaultValues: { dateFrom: '', durationDays: 1, address: '', notes: '' },
+    defaultValues: { dateFrom: '', durationDays: 3, notes: '' },
   });
 
   const dateFrom = form.watch('dateFrom');
   const durationDays = form.watch('durationDays');
-  const fromDate = parseDate(dateFrom);
-  const toDate = fromDate ? new Date(fromDate) : null;
-  if (toDate) {
-    toDate.setUTCDate(toDate.getUTCDate() + durationDays);
-  }
-  const days = fromDate && toDate ? daysBetween(fromDate, toDate) : null;
-  const totalPrice = days && equipment ? days * equipment.pricePerDay : null;
+
+  const blockedQuery = useQuery({
+    queryKey: ['equipment', equipmentId, 'blocked', searchFromYmd, searchToYmd],
+    queryFn: () => getEquipmentBlockedRanges(equipmentId, searchFromYmd, searchToYmd),
+  });
+
+  const availableSlots = useMemo(() => {
+    if (!blockedQuery.data) return [];
+    return computeAvailableSlots(blockedQuery.data, durationDays, {
+      horizonDays: RENTAL_BOOKING_HORIZON_DAYS,
+      searchFrom: startOfToday(),
+    });
+  }, [blockedQuery.data, durationDays]);
+
+  useEffect(() => {
+    if (!availableSlots.length) {
+      if (dateFrom) form.setValue('dateFrom', '');
+      return;
+    }
+    if (!availableSlots.some((slot) => slot.dateFrom === dateFrom)) {
+      form.setValue('dateFrom', availableSlots[0]!.dateFrom, { shouldValidate: true });
+    }
+  }, [availableSlots, dateFrom, form]);
+
+  const period = useMemo(
+    () => (dateFrom ? rentalPeriodFromDuration(dateFrom, durationDays) : null),
+    [dateFrom, durationDays]
+  );
+
+  const days =
+    period && parseDate(dateFrom)
+      ? daysBetween(parseDate(dateFrom)!, period.dateToIso)
+      : null;
+  const totalPrice = days != null ? days * pricePerDay : null;
+
+  const canSubmit =
+    !!user &&
+    !!pickupAddress.trim() &&
+    !!period &&
+    availableSlots.some((slot) => slot.dateFrom === dateFrom) &&
+    !blockedQuery.isLoading &&
+    !blockedQuery.isError;
 
   const mutation = useMutation({
     mutationFn: async (payload: NewRentalFormData) => {
-      const data = newRentalSchema.parse(payload);
-
       if (!user) throw new Error('Nie jesteś zalogowany');
+      if (!pickupAddress.trim()) throw new Error('Brak adresu odbioru u właściciela');
 
-      const from = parseDate(data.dateFrom);
-      const to = from ? new Date(from) : null;
-      if (to) {
-        to.setUTCDate(to.getUTCDate() + data.durationDays);
+      const data = newRentalSchema.parse(payload);
+      const rentalPeriod = rentalPeriodFromDuration(data.dateFrom, data.durationDays);
+      if (!rentalPeriod) throw new Error('Wybierz prawidłowy termin');
+
+      const blocked = await getEquipmentBlockedRanges(
+        equipmentId,
+        searchFromYmd,
+        searchToYmd
+      );
+      const slots = computeAvailableSlots(blocked, data.durationDays, {
+        horizonDays: RENTAL_BOOKING_HORIZON_DAYS,
+        searchFrom: startOfToday(),
+      });
+      if (!slots.some((slot) => slot.dateFrom === data.dateFrom)) {
+        throw new Error('Wybrany termin nie jest już dostępny');
       }
-      if (!from) throw new Error('Podaj prawidłową datę od (RRRR-MM-DD)');
-      if (!to) throw new Error('Podaj prawidłową datę odbioru');
-      if (to <= from) throw new Error('Data zakończenia musi być po dacie rozpoczęcia');
-
-      const unavailableId = findStatusId('unavailable');
-      if (!unavailableId) throw new Error('Nie udało się pobrać statusów');
 
       return createRental({
-        dateFrom: from.toISOString(),
-        dateTo: to.toISOString(),
+        equipmentId,
+        dateFrom: rentalPeriod.dateFromIso,
+        dateTo: rentalPeriod.dateToIso,
         notes: data.notes.trim(),
-        address: data.address.trim(),
-        clientId: user.userId,
-        equipmentId: targetEquipmentId,
-        statusId: unavailableId,
       });
     },
     onSuccess: (rental) => {
-      router.replace({ pathname: '/rental/confirmed', params: { rentalId: String(rental.id) } });
+      router.replace(rentalConfirmedHref(rental.id));
     },
-    onError: (e) => {
-      Alert.alert('Błąd', e instanceof Error ? e.message : 'Spróbuj ponownie');
+    onError: (error) => {
+      Alert.alert('Błąd', error instanceof Error ? error.message : 'Spróbuj ponownie');
     },
   });
 
+  const durationOptions = useMemo(
+    () =>
+      RENTAL_DURATION_OPTIONS.map((days) => ({
+        value: String(days),
+        label: `${days} ${days === 1 ? 'dzień' : 'dni'}`,
+      })),
+    []
+  );
+
   return {
     form,
-    equipment,
-    equipLoading,
-    dateTo: toDate ? toYmd(toDate) : null,
+    period,
     days,
     totalPrice,
+    availableSlots,
+    durationOptions,
+    slotsLoading: blockedQuery.isLoading,
+    slotsError: blockedQuery.isError,
+    canSubmit,
     isPending: mutation.isPending,
     submit: form.handleSubmit((data) => mutation.mutate(data)),
   };

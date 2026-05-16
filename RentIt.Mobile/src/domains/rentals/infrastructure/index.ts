@@ -1,1 +1,7 @@
-export { getRentals, getRentalById, updateRentalStatus, createRental, deleteRental } from './rentals-api';
+export {
+  getRentals,
+  getRentalById,
+  getClientRentals,
+  getOwnerRentals,
+} from './queries';
+export { createRental, updateRentalStatus, deleteRental } from './commands';

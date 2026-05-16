@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Server.Data;
@@ -10,7 +12,11 @@ namespace RentIt.Server.Controllers;
 [Route("api/equipment-availability-blocks")]
 public class EquipmentAvailabilityBlocksController(AppDbContext db) : ControllerBase
 {
+    private int? CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType<IEnumerable<EquipmentAvailabilityBlockDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<EquipmentAvailabilityBlockDto>>> GetAll([FromQuery] int? equipmentId)
     {
@@ -27,6 +33,7 @@ public class EquipmentAvailabilityBlocksController(AppDbContext db) : Controller
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     [ProducesResponseType<EquipmentAvailabilityBlockDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EquipmentAvailabilityBlockDto>> GetById(int id)
@@ -36,15 +43,21 @@ public class EquipmentAvailabilityBlocksController(AppDbContext db) : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType<EquipmentAvailabilityBlockDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<EquipmentAvailabilityBlockDto>> Create([FromBody] CreateEquipmentAvailabilityBlockDto dto)
     {
         if (dto.DateFrom >= dto.DateTo)
             return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
 
-        if (!await db.Equipment.AnyAsync(e => e.Id == dto.EquipmentId))
+        var equipment = await db.Equipment.FindAsync(dto.EquipmentId);
+        if (equipment is null)
             return BadRequest(new ErrorResponseDto { Message = "Sprzet nie istnieje" });
+
+        if (CurrentUserId != equipment.UserId)
+            return Forbid();
 
         var block = new EquipmentAvailabilityBlock
         {
@@ -61,17 +74,25 @@ public class EquipmentAvailabilityBlocksController(AppDbContext db) : Controller
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEquipmentAvailabilityBlockDto dto)
     {
         if (dto.DateFrom >= dto.DateTo)
             return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
 
-        var block = await db.EquipmentAvailabilityBlocks.FindAsync(id);
+        var block = await db.EquipmentAvailabilityBlocks
+            .Include(b => b.Equipment)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
         if (block is null)
             return NotFound();
+
+        if (CurrentUserId != block.Equipment?.UserId)
+            return Forbid();
 
         block.DateFrom = dto.DateFrom;
         block.DateTo = dto.DateTo;
@@ -82,13 +103,21 @@ public class EquipmentAvailabilityBlocksController(AppDbContext db) : Controller
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        var block = await db.EquipmentAvailabilityBlocks.FindAsync(id);
+        var block = await db.EquipmentAvailabilityBlocks
+            .Include(b => b.Equipment)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
         if (block is null)
             return NotFound();
+
+        if (CurrentUserId != block.Equipment?.UserId)
+            return Forbid();
 
         db.EquipmentAvailabilityBlocks.Remove(block);
         await db.SaveChangesAsync();

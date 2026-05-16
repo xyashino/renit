@@ -45,15 +45,9 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="client" options={{ headerShown: false }} />
+          <Stack.Screen name="owner" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(user)" options={{ headerShown: false }} />
-          <Stack.Screen name="equipment/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="rental/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="equipment/add" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="rental/confirmed" options={{ headerShown: false, gestureEnabled: false }} />
-          <Stack.Screen name="equipment/edit" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="equipment/rentals" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       </AuthProvider>

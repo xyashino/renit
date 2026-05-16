@@ -16,7 +16,4 @@ public sealed class UpdateUserDto
     [EmailAddress]
     [MaxLength(256)]
     public string Email { get; set; } = string.Empty;
-
-    [Required]
-    public string Address { get; set; } = string.Empty;
 }

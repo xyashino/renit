@@ -1,11 +1,16 @@
 import { Text } from '@/src/shared/ui/components/text';
 import { cn } from '@/src/shared/utils';
 import { EmptyStateRecipe, ErrorAlertRecipe, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
-import { RENTAL_TABS, RENTALS_SCREEN, useMyRentals, type RentalTab } from '../../application';
+import { RENTAL_TABS, useRentalsList, type RentalTab } from '../../application';
+import {
+  RENTALS_SCREEN_CLIENT,
+  RENTALS_SCREEN_OWNER,
+  rentalDetailHref,
+} from '../../constants';
 import { useRouter } from 'expo-router';
 import { Suspense } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { RentalCard } from '../components/rental-card';
+import { Card } from '../components/card';
 
 export function RentalsScreen() {
   return (
@@ -16,8 +21,9 @@ export function RentalsScreen() {
 }
 
 function RentalsScreenContent() {
-  const { activeTab, handleTabChange, rentals, isError, refetch } = useMyRentals();
+  const { activeTab, handleTabChange, rentals, isError, refetch, isOwner } = useRentalsList();
   const router = useRouter();
+  const copy = isOwner ? RENTALS_SCREEN_OWNER : RENTALS_SCREEN_CLIENT;
 
   return (
     <ScrollView
@@ -25,11 +31,7 @@ function RentalsScreenContent() {
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader
-        className="px-6 pt-6"
-        title={RENTALS_SCREEN.TITLE}
-        description={RENTALS_SCREEN.SUBTITLE}
-      />
+      <ScreenHeader className="px-6 pt-6" title={copy.title} description={copy.subtitle} />
 
       <View className="flex-row mx-6 mb-2 bg-card border border-border rounded-xl overflow-hidden">
         {RENTAL_TABS.map((tab, index) => (
@@ -57,28 +59,27 @@ function RentalsScreenContent() {
       <View className="px-6 gap-4">
         {isError ? (
           <ErrorAlertRecipe
-            title={RENTALS_SCREEN.ERROR_TITLE}
-            description={RENTALS_SCREEN.ERROR_DESC}
+            title={copy.errorTitle}
+            description={copy.errorDesc}
             onRetry={() => refetch()}
           />
         ) : rentals.length === 0 ? (
           <EmptyStateRecipe
-            title={RENTALS_SCREEN.EMPTY_TITLE}
+            title={copy.emptyTitle}
             description={
               activeTab === 'active'
-                ? RENTALS_SCREEN.EMPTY_ACTIVE
+                ? copy.emptyActive
                 : activeTab === 'pending'
-                  ? RENTALS_SCREEN.EMPTY_PENDING
-                  : RENTALS_SCREEN.EMPTY_HISTORY
+                  ? copy.emptyPending
+                  : copy.emptyHistory
             }
           />
         ) : (
           rentals.map((rental) => (
-            <RentalCard
+            <Card
               key={rental.id}
               rental={rental}
-              showReview={activeTab === 'history' && rental.status?.key === 'available'}
-              onPress={() => router.push({ pathname: '/rental/[id]', params: { id: String(rental.id) } })}
+              onPress={() => router.push(rentalDetailHref(rental.id, isOwner))}
             />
           ))
         )}

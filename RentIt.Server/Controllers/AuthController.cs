@@ -28,7 +28,7 @@ public class AuthController(AppDbContext db, IConfiguration config) : Controller
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            Address = dto.Address,
+            AccountType = dto.AccountType,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
         };
 
@@ -60,6 +60,7 @@ public class AuthController(AppDbContext db, IConfiguration config) : Controller
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            AccountType = user.AccountType,
         };
 
     private string GenerateToken(User user)
@@ -73,6 +74,7 @@ public class AuthController(AppDbContext db, IConfiguration config) : Controller
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim("accountType", ((int)user.AccountType).ToString()),
         };
 
         var token = new JwtSecurityToken(

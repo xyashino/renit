@@ -6,19 +6,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/shared/ui/components/select';
+import { cn } from '@/src/shared/utils';
 
-type FormInputSelectOption = {
+export type SelectFieldOption = {
   value: string;
   label: string;
 };
 
-type Props = {
+type SelectFieldProps = {
+  placeholder: string;
+  value?: SelectFieldOption;
+  selectedValue?: string;
+  options: SelectFieldOption[];
+  onValueChange: (value: string) => void;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+export function SelectField({
+  placeholder,
+  value,
+  selectedValue,
+  options,
+  onValueChange,
+  disabled = false,
+  triggerClassName,
+}: SelectFieldProps) {
+  const resolvedValue = value ?? options.find((option) => option.value === selectedValue);
+
+  return (
+    <Select
+      value={resolvedValue}
+      onValueChange={(option) => {
+        const next = typeof option === 'string' ? option : option?.value;
+        onValueChange(next ?? '');
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger className={cn('w-full', triggerClassName)} disabled={disabled}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} label={option.label} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+type FormInputSelectProps = {
   label: string;
   placeholder: string;
-  value?: FormInputSelectOption;
+  value?: SelectFieldOption;
   selectedValue?: string;
-  options: FormInputSelectOption[];
+  options: SelectFieldOption[];
   onValueChange: (value: string) => void;
+  disabled?: boolean;
 };
 
 export function FormInputSelect({
@@ -28,32 +74,21 @@ export function FormInputSelect({
   selectedValue,
   options,
   onValueChange,
-}: Props) {
-  const resolvedValue = value ?? options.find((option) => option.value === selectedValue);
-
+  disabled,
+}: FormInputSelectProps) {
   return (
     <FormItem>
       <FormLabel>{label}</FormLabel>
-      <Select
-        value={resolvedValue}
-        onValueChange={(option) => {
-          const selectedValue = typeof option === 'string' ? option : option?.value;
-          onValueChange(selectedValue ?? '');
-        }}
-      >
-        <FormControl asChild>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} label={option.label} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <FormControl>
+        <SelectField
+          placeholder={placeholder}
+          value={value}
+          selectedValue={selectedValue}
+          options={options}
+          onValueChange={onValueChange}
+          disabled={disabled}
+        />
+      </FormControl>
       <FormMessage />
     </FormItem>
   );

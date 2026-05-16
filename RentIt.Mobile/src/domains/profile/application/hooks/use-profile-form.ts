@@ -23,14 +23,20 @@ export function useProfileForm() {
       firstName: profile?.firstName ?? user?.firstName ?? '',
       lastName: profile?.lastName ?? user?.lastName ?? '',
       email: profile?.email ?? user?.email ?? '',
-      address: profile?.address ?? '',
     },
   });
 
   const mutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
       if (!user) throw new Error('Nie jesteś zalogowany');
-      await updateUser(user.userId, data);
+      if (!profile?.accountType) throw new Error('Nie udało się ustalić typu konta');
+
+      await updateUser(user.userId, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        accountType: profile.accountType,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', user?.userId] });

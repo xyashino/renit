@@ -12,12 +12,11 @@ public class Equipment
     public string Address { get; set; } = string.Empty;
 
     public int UserId { get; set; }
-    public EquipmentCategory Category { get; set; } = EquipmentCategory.Electronics;
     public ItemStatus Status { get; set; } = ItemStatus.Available;
 
     public User? Owner { get; set; }
     public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
-    public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<FavoriteEquipment> FavoritedByUsers { get; set; } = new List<FavoriteEquipment>();
     public ICollection<EquipmentAvailabilityBlock> AvailabilityBlocks { get; set; } = new List<EquipmentAvailabilityBlock>();
+    public ICollection<EquipmentCategory> EquipmentCategories { get; set; } = new List<EquipmentCategory>();
 }

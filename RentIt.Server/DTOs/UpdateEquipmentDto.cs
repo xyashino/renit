@@ -21,10 +21,8 @@ public sealed class UpdateEquipmentDto
     [Range(0, double.MaxValue)]
     public decimal Deposit { get; set; }
 
-    [Required]
-    public string Address { get; set; } = string.Empty;
+    public string? Address { get; set; }
 
-    public int UserId { get; set; }
-    public EquipmentCategory Category { get; set; }
     public ItemStatus Status { get; set; }
+    public List<int> CategoryIds { get; set; } = new();
 }

@@ -22,6 +22,35 @@ namespace RentIt.Server.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("RentIt.Server.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("RentIt.Server.Models.Equipment", b =>
                 {
                     b.Property<int>("Id")
@@ -33,9 +62,6 @@ namespace RentIt.Server.Migrations
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("Deposit")
                         .HasPrecision(18, 2)
@@ -102,6 +128,21 @@ namespace RentIt.Server.Migrations
                     b.ToTable("EquipmentAvailabilityBlocks");
                 });
 
+            modelBuilder.Entity("RentIt.Server.Models.EquipmentCategory", b =>
+                {
+                    b.Property<int>("EquipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("EquipmentId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("EquipmentCategories");
+                });
+
             modelBuilder.Entity("RentIt.Server.Models.FavoriteEquipment", b =>
                 {
                     b.Property<int>("UserId")
@@ -151,56 +192,13 @@ namespace RentIt.Server.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserAddressId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
 
                     b.HasIndex("EquipmentId");
 
-                    b.HasIndex("UserAddressId");
-
                     b.ToTable("Rentals");
-                });
-
-            modelBuilder.Entity("RentIt.Server.Models.Review", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("EquipmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RentalId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("EquipmentId");
-
-                    b.HasIndex("RentalId");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("RentIt.Server.Models.User", b =>
@@ -211,9 +209,8 @@ namespace RentIt.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("AccountType")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -245,55 +242,6 @@ namespace RentIt.Server.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("RentIt.Server.Models.UserAddress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserAddresses");
-                });
-
             modelBuilder.Entity("RentIt.Server.Models.Equipment", b =>
                 {
                     b.HasOne("RentIt.Server.Models.User", "Owner")
@@ -312,6 +260,25 @@ namespace RentIt.Server.Migrations
                         .HasForeignKey("EquipmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Equipment");
+                });
+
+            modelBuilder.Entity("RentIt.Server.Models.EquipmentCategory", b =>
+                {
+                    b.HasOne("RentIt.Server.Models.Category", "Category")
+                        .WithMany("EquipmentCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentIt.Server.Models.Equipment", "Equipment")
+                        .WithMany("EquipmentCategories")
+                        .HasForeignKey("EquipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("Equipment");
                 });
@@ -349,87 +316,33 @@ namespace RentIt.Server.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentIt.Server.Models.UserAddress", "UserAddress")
-                        .WithMany("Rentals")
-                        .HasForeignKey("UserAddressId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Client");
 
                     b.Navigation("Equipment");
-
-                    b.Navigation("UserAddress");
                 });
 
-            modelBuilder.Entity("RentIt.Server.Models.Review", b =>
+            modelBuilder.Entity("RentIt.Server.Models.Category", b =>
                 {
-                    b.HasOne("RentIt.Server.Models.User", "Author")
-                        .WithMany("Reviews")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentIt.Server.Models.Equipment", "Equipment")
-                        .WithMany("Reviews")
-                        .HasForeignKey("EquipmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentIt.Server.Models.Rental", "Rental")
-                        .WithMany("Reviews")
-                        .HasForeignKey("RentalId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Equipment");
-
-                    b.Navigation("Rental");
-                });
-
-            modelBuilder.Entity("RentIt.Server.Models.UserAddress", b =>
-                {
-                    b.HasOne("RentIt.Server.Models.User", "User")
-                        .WithMany("Addresses")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
+                    b.Navigation("EquipmentCategories");
                 });
 
             modelBuilder.Entity("RentIt.Server.Models.Equipment", b =>
                 {
                     b.Navigation("AvailabilityBlocks");
 
+                    b.Navigation("EquipmentCategories");
+
                     b.Navigation("FavoritedByUsers");
 
                     b.Navigation("Rentals");
-
-                    b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("RentIt.Server.Models.Rental", b =>
-                {
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("RentIt.Server.Models.User", b =>
                 {
-                    b.Navigation("Addresses");
-
                     b.Navigation("EquipmentItems");
 
                     b.Navigation("FavoriteEquipment");
 
-                    b.Navigation("Rentals");
-
-                    b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("RentIt.Server.Models.UserAddress", b =>
-                {
                     b.Navigation("Rentals");
                 });
 #pragma warning restore 612, 618

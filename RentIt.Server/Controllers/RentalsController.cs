@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Server.Data;
@@ -7,17 +9,26 @@ using RentIt.Server.Models;
 namespace RentIt.Server.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/rentals")]
 public class RentalsController(AppDbContext db) : ControllerBase
 {
+    private int? CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     [HttpGet]
     [ProducesResponseType<IEnumerable<RentalDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<RentalDto>>> GetAll([FromQuery] int? equipmentId)
     {
+        if (CurrentUserId is null)
+            return Forbid();
+
+        var meId = CurrentUserId.Value;
+
         var query = db.Rentals
             .Include(r => r.Client)
-            .Include(r => r.UserAddress)
-            .AsQueryable();
+            .Include(r => r.Equipment)
+            .Where(r => r.ClientId == meId || r.Equipment!.UserId == meId);
 
         if (equipmentId.HasValue)
             query = query.Where(r => r.EquipmentId == equipmentId.Value);
@@ -28,28 +39,48 @@ public class RentalsController(AppDbContext db) : ControllerBase
 
     [HttpGet("{id:int}")]
     [ProducesResponseType<RentalDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RentalDto>> GetById(int id)
     {
         var rental = await db.Rentals
             .Include(r => r.Client)
-            .Include(r => r.UserAddress)
+            .Include(r => r.Equipment)
             .FirstOrDefaultAsync(r => r.Id == id);
 
-        return rental is null ? NotFound() : Ok(ToDto(rental));
+        if (rental is null)
+            return NotFound();
+
+        if (!IsParticipant(rental))
+            return Forbid();
+
+        return Ok(ToDto(rental));
     }
 
     [HttpPost]
     [ProducesResponseType<RentalDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<RentalDto>> Create([FromBody] CreateRentalDto dto)
     {
+        if (CurrentUserId is null)
+            return Forbid();
+
+        var clientId = CurrentUserId.Value;
+
+        var client = await db.Users.FindAsync(clientId);
+        if (client is null || client.AccountType != UserAccountType.Client)
+            return Forbid();
+
         if (dto.DateFrom >= dto.DateTo)
             return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
 
-        var addressResult = await ResolveRentalAddress(dto.ClientId, dto.UserAddressId, dto.Address);
-        if (addressResult.Error is not null)
-            return BadRequest(addressResult.Error);
+        var equipment = await db.Equipment.FindAsync(dto.EquipmentId);
+        if (equipment is null)
+            return BadRequest(new ErrorResponseDto { Message = "Sprzet nie istnieje" });
+
+        if (equipment.UserId == clientId)
+            return BadRequest(new ErrorResponseDto { Message = "Nie mozesz wypozyczyc wlasnego sprzetu" });
 
         if (await HasAvailabilityConflict(dto.EquipmentId, dto.DateFrom, dto.DateTo))
             return BadRequest(new ErrorResponseDto { Message = "Sprzet nie jest dostepny w wybranym terminie" });
@@ -59,11 +90,10 @@ public class RentalsController(AppDbContext db) : ControllerBase
             DateFrom = dto.DateFrom,
             DateTo = dto.DateTo,
             Notes = dto.Notes,
-            Address = addressResult.Address,
-            ClientId = dto.ClientId,
-            EquipmentId = dto.EquipmentId,
-            UserAddressId = dto.UserAddressId,
-            Status = dto.Status,
+            Address = equipment.Address,
+            ClientId = clientId,
+            EquipmentId = equipment.Id,
+            Status = RentalStatus.Pending,
         };
 
         db.Rentals.Add(rental);
@@ -71,7 +101,7 @@ public class RentalsController(AppDbContext db) : ControllerBase
 
         var created = await db.Rentals
             .Include(r => r.Client)
-            .Include(r => r.UserAddress)
+            .Include(r => r.Equipment)
             .FirstAsync(r => r.Id == rental.Id);
 
         return CreatedAtAction(nameof(GetById), new { id = rental.Id }, ToDto(created));
@@ -80,31 +110,29 @@ public class RentalsController(AppDbContext db) : ControllerBase
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateRentalDto dto)
     {
-        if (dto.DateFrom >= dto.DateTo)
-            return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
-
         var rental = await db.Rentals.FindAsync(id);
         if (rental is null)
             return NotFound();
 
-        var addressResult = await ResolveRentalAddress(dto.ClientId, dto.UserAddressId, dto.Address);
-        if (addressResult.Error is not null)
-            return BadRequest(addressResult.Error);
+        if (CurrentUserId != rental.ClientId)
+            return Forbid();
 
-        if (await HasAvailabilityConflict(dto.EquipmentId, dto.DateFrom, dto.DateTo, id))
+        if (rental.Status != RentalStatus.Pending)
+            return BadRequest(new ErrorResponseDto { Message = "Edycja jest mozliwa tylko dla oczekujacych rezerwacji" });
+
+        if (dto.DateFrom >= dto.DateTo)
+            return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
+
+        if (await HasAvailabilityConflict(rental.EquipmentId, dto.DateFrom, dto.DateTo, id))
             return BadRequest(new ErrorResponseDto { Message = "Sprzet nie jest dostepny w wybranym terminie" });
 
         rental.DateFrom = dto.DateFrom;
         rental.DateTo = dto.DateTo;
         rental.Notes = dto.Notes;
-        rental.Address = addressResult.Address;
-        rental.ClientId = dto.ClientId;
-        rental.EquipmentId = dto.EquipmentId;
-        rental.UserAddressId = dto.UserAddressId;
-        rental.Status = dto.Status;
 
         await db.SaveChangesAsync();
         return NoContent();
@@ -112,13 +140,30 @@ public class RentalsController(AppDbContext db) : ControllerBase
 
     [HttpPatch("{id:int}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateRentalStatusDto dto)
     {
-        var rental = await db.Rentals.FindAsync(id);
+        var rental = await db.Rentals
+            .Include(r => r.Equipment)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
         if (rental is null)
             return NotFound();
+
+        if (CurrentUserId is null)
+            return Forbid();
+
+        var ownerId = rental.Equipment?.UserId;
+        var isOwner = ownerId == CurrentUserId;
+        var isClient = rental.ClientId == CurrentUserId;
+
+        if (!isOwner && !isClient)
+            return Forbid();
+
+        if (!IsTransitionAllowed(rental.Status, dto.Status, isOwner, isClient))
+            return BadRequest(new ErrorResponseDto { Message = "Niedozwolone przejscie statusu" });
 
         rental.Status = dto.Status;
         await db.SaveChangesAsync();
@@ -127,6 +172,7 @@ public class RentalsController(AppDbContext db) : ControllerBase
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
@@ -134,10 +180,29 @@ public class RentalsController(AppDbContext db) : ControllerBase
         if (rental is null)
             return NotFound();
 
+        if (CurrentUserId != rental.ClientId)
+            return Forbid();
+
+        if (rental.Status != RentalStatus.Pending && rental.Status != RentalStatus.Cancelled)
+            return BadRequest(new ErrorResponseDto { Message = "Usun rezerwacje przed potwierdzeniem lub po anulowaniu" });
+
         db.Rentals.Remove(rental);
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    private bool IsParticipant(Rental rental) =>
+        CurrentUserId == rental.ClientId || CurrentUserId == rental.Equipment?.UserId;
+
+    private static bool IsTransitionAllowed(RentalStatus current, RentalStatus next, bool isOwner, bool isClient) =>
+        (current, next) switch
+        {
+            (RentalStatus.Pending, RentalStatus.Active) => isOwner,
+            (RentalStatus.Active, RentalStatus.Completed) => isOwner,
+            (RentalStatus.Pending, RentalStatus.Cancelled) => isClient || isOwner,
+            (RentalStatus.Active, RentalStatus.Cancelled) => isClient || isOwner,
+            _ => false,
+        };
 
     private static RentalDto ToDto(Rental r) =>
         new()
@@ -149,10 +214,23 @@ public class RentalsController(AppDbContext db) : ControllerBase
             Address = r.Address,
             ClientId = r.ClientId,
             EquipmentId = r.EquipmentId,
-            UserAddressId = r.UserAddressId,
             Status = r.Status,
             Client = ToUserDto(r.Client),
-            UserAddress = ToAddressDto(r.UserAddress),
+            Equipment = r.Equipment is null ? null : ToEquipmentDto(r.Equipment),
+        };
+
+    private static EquipmentDto ToEquipmentDto(Equipment e) =>
+        new()
+        {
+            Id = e.Id,
+            Name = e.Name,
+            Description = e.Description,
+            ImageUrl = e.ImageUrl,
+            PricePerDay = e.PricePerDay,
+            Deposit = e.Deposit,
+            Address = e.Address,
+            UserId = e.UserId,
+            Status = e.Status,
         };
 
     private static UserDto? ToUserDto(User? u) =>
@@ -164,7 +242,7 @@ public class RentalsController(AppDbContext db) : ControllerBase
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 Email = u.Email,
-                Address = u.Address,
+                AccountType = u.AccountType,
                 CreatedAt = u.CreatedAt,
             };
 
@@ -177,6 +255,7 @@ public class RentalsController(AppDbContext db) : ControllerBase
         var rentalConflict = await db.Rentals.AnyAsync(r =>
             r.EquipmentId == equipmentId &&
             (!ignoredRentalId.HasValue || r.Id != ignoredRentalId.Value) &&
+            (r.Status == RentalStatus.Pending || r.Status == RentalStatus.Active) &&
             r.DateFrom < dateTo &&
             dateFrom < r.DateTo);
 
@@ -188,46 +267,4 @@ public class RentalsController(AppDbContext db) : ControllerBase
             b.DateFrom < dateTo &&
             dateFrom < b.DateTo);
     }
-
-    private async Task<(string Address, ErrorResponseDto? Error)> ResolveRentalAddress(
-        int clientId,
-        int? userAddressId,
-        string address)
-    {
-        if (!userAddressId.HasValue)
-        {
-            var trimmed = address.Trim();
-            return string.IsNullOrWhiteSpace(trimmed)
-                ? (string.Empty, new ErrorResponseDto { Message = "Podaj adres odbioru" })
-                : (trimmed, null);
-        }
-
-        var userAddress = await db.UserAddresses.FindAsync(userAddressId.Value);
-        if (userAddress is null)
-            return (string.Empty, new ErrorResponseDto { Message = "Adres nie istnieje" });
-
-        if (userAddress.UserId != clientId)
-            return (string.Empty, new ErrorResponseDto { Message = "Adres nie nalezy do tego uzytkownika" });
-
-        return (FormatAddress(userAddress), null);
-    }
-
-    private static string FormatAddress(UserAddress address) =>
-        $"{address.Street}, {address.PostalCode} {address.City}, {address.Country}";
-
-    private static UserAddressDto? ToAddressDto(UserAddress? a) =>
-        a is null
-            ? null
-            : new UserAddressDto
-            {
-                Id = a.Id,
-                UserId = a.UserId,
-                Name = a.Name,
-                Street = a.Street,
-                City = a.City,
-                PostalCode = a.PostalCode,
-                Country = a.Country,
-                IsDefault = a.IsDefault,
-                CreatedAt = a.CreatedAt,
-            };
 }

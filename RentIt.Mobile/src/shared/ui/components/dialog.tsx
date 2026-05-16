@@ -96,7 +96,13 @@ function DialogHeader({ className, ...props }: ViewProps) {
 function DialogFooter({ className, ...props }: ViewProps) {
   return (
     <View
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      className={cn(
+        Platform.select({
+          web: 'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
+          default: 'flex shrink-0 flex-row gap-2',
+        }),
+        className
+      )}
       {...props}
     />
   );

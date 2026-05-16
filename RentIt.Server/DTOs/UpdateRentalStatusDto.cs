@@ -6,5 +6,5 @@ namespace RentIt.Server.DTOs;
 public sealed class UpdateRentalStatusDto
 {
     [Required]
-    public ItemStatus Status { get; set; }
+    public RentalStatus Status { get; set; }
 }

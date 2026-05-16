@@ -12,8 +12,11 @@
       "@rentals/*": [
         "./src/domains/rentals/*",
       ],
-      "@equipment/*": [
-        "./src/domains/equipment/*",
+      "@equipment-catalog/*": [
+        "./src/domains/equipment-catalog/*",
+      ],
+      "@owner-inventory/*": [
+        "./src/domains/owner-inventory/*",
       ],
       "@profile/*": [
         "./src/domains/profile/*",

@@ -1,12 +1,11 @@
-import type { Equipment } from '@equipment/domain';
-import type { Status } from './status';
+import type { Equipment } from '@/src/shared/domain/equipment';
+import type { RentalStatus } from './status';
 
 export interface RentalClient {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
-  address?: string;
 }
 
 export interface Rental {
@@ -20,5 +19,5 @@ export interface Rental {
   statusId: number;
   client?: RentalClient;
   equipment?: Equipment;
-  status?: Status;
+  status?: RentalStatus;
 }
