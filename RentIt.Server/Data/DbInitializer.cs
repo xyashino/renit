@@ -5,7 +5,9 @@ namespace RentIt.Server.Data;
 
 public static class DbInitializer
 {
-    private const string DefaultPassword = "Test1234!";
+    public const string DefaultPassword = "Test1234!";
+    public const string OwnerEmail = "owner@test.pl";
+    public const string ClientEmail = "client@test.pl";
 
     private static readonly (string Key, string Name)[] SeedCategoryDefinitions =
     [
@@ -28,11 +30,8 @@ public static class DbInitializer
 
     private static void SeedUsers(AppDbContext db)
     {
-        UpsertSeedUser(db, "Jan", "Kowalski", "jan@rentit.pl", UserAccountType.Owner);
-        UpsertSeedUser(db, "Anna", "Nowak", "anna@rentit.pl", UserAccountType.Owner);
-        UpsertSeedUser(db, "Piotr", "Wisniewski", "piotr@rentit.pl", UserAccountType.Client);
-        UpsertSeedUser(db, "Maria", "Lewandowska", "maria@rentit.pl", UserAccountType.Client);
-
+        UpsertSeedUser(db, "Jan", "Właściciel", OwnerEmail, UserAccountType.Owner);
+        UpsertSeedUser(db, "Anna", "Klient", ClientEmail, UserAccountType.Client);
         db.SaveChanges();
     }
 
@@ -87,10 +86,8 @@ public static class DbInitializer
     {
         if (db.Equipment.Any()) return;
 
-        var jan = db.Users.FirstOrDefault(u => u.Email == "jan@rentit.pl");
-        var anna = db.Users.FirstOrDefault(u => u.Email == "anna@rentit.pl");
-
-        if (jan is null || anna is null)
+        var owner = db.Users.FirstOrDefault(u => u.Email == OwnerEmail);
+        if (owner is null)
             return;
 
         var categoriesByKey = db.Categories.ToDictionary(c => c.Key, c => c.Id);
@@ -105,8 +102,8 @@ public static class DbInitializer
                 PricePerDay = 80m,
                 Deposit = 500m,
                 Address = "ul. Marszałkowska 1, Warszawa",
-                UserId = jan.Id,
-                Status = ItemStatus.Available,
+                UserId = owner.Id,
+                Status = ItemStatus.Rented,
             }, new[] { "electronics" }),
             (new Equipment
             {
@@ -116,7 +113,7 @@ public static class DbInitializer
                 PricePerDay = 120m,
                 Deposit = 800m,
                 Address = "ul. Marszałkowska 1, Warszawa",
-                UserId = jan.Id,
+                UserId = owner.Id,
                 Status = ItemStatus.Available,
             }, new[] { "electronics" }),
             (new Equipment
@@ -127,7 +124,7 @@ public static class DbInitializer
                 PricePerDay = 25m,
                 Deposit = 150m,
                 Address = "ul. Floriańska 5, Kraków",
-                UserId = anna.Id,
+                UserId = owner.Id,
                 Status = ItemStatus.Available,
             }, new[] { "tools" }),
             (new Equipment
@@ -138,8 +135,8 @@ public static class DbInitializer
                 PricePerDay = 30m,
                 Deposit = 200m,
                 Address = "ul. Floriańska 5, Kraków",
-                UserId = anna.Id,
-                Status = ItemStatus.Available,
+                UserId = owner.Id,
+                Status = ItemStatus.Unavailable,
             }, new[] { "tools", "construction" }),
             (new Equipment
             {
@@ -149,7 +146,7 @@ public static class DbInitializer
                 PricePerDay = 60m,
                 Deposit = 400m,
                 Address = "ul. Marszałkowska 1, Warszawa",
-                UserId = jan.Id,
+                UserId = owner.Id,
                 Status = ItemStatus.Available,
             }, new[] { "construction" }),
             (new Equipment
@@ -160,7 +157,7 @@ public static class DbInitializer
                 PricePerDay = 45m,
                 Deposit = 300m,
                 Address = "ul. Floriańska 5, Kraków",
-                UserId = anna.Id,
+                UserId = owner.Id,
                 Status = ItemStatus.Available,
             }, new[] { "garden" }),
             (new Equipment
@@ -171,7 +168,7 @@ public static class DbInitializer
                 PricePerDay = 50m,
                 Deposit = 350m,
                 Address = "ul. Marszałkowska 1, Warszawa",
-                UserId = jan.Id,
+                UserId = owner.Id,
                 Status = ItemStatus.Available,
             }, new[] { "sports-and-recreation" }),
         };
@@ -207,9 +204,8 @@ public static class DbInitializer
         if (db.Rentals.Any())
             return;
 
-        var piotr = db.Users.FirstOrDefault(u => u.Email == "piotr@rentit.pl");
-        var maria = db.Users.FirstOrDefault(u => u.Email == "maria@rentit.pl");
-        if (piotr is null || maria is null)
+        var client = db.Users.FirstOrDefault(u => u.Email == ClientEmail);
+        if (client is null)
             return;
 
         var equipment = EquipmentByName(db);
@@ -225,26 +221,22 @@ public static class DbInitializer
 
         var rentals = new[]
         {
-            NewRental(piotr.Id, canon, SeedUtcDate(-2), SeedUtcDate(3), RentalStatus.Active,
-                "Sesja zdjęciowa w weekend — proszę o wcześniejszy odbiór."),
-            NewRental(piotr.Id, drill, SeedUtcDate(7), SeedUtcDate(10), RentalStatus.Pending,
-                "Remont łazienki, potrzebuję wiertarki na 3 dni."),
-            NewRental(piotr.Id, bike, SeedUtcDate(-60), SeedUtcDate(-57), RentalStatus.Completed,
-                "Wycieczka w Bieszczady."),
-            NewRental(piotr.Id, drone, SeedUtcDate(14), SeedUtcDate(17), RentalStatus.Cancelled,
-                "Anulowane — zmiana planów podróży."),
-            NewRental(piotr.Id, mixer, SeedUtcDate(-45), SeedUtcDate(-42), RentalStatus.Completed,
-                "Budowa tarasu — bez opinii (do testu formularza)."),
-            NewRental(piotr.Id, canon, SeedUtcDate(-90), SeedUtcDate(-87), RentalStatus.Completed,
-                "Sesja produktowa — archiwalna."),
-            NewRental(maria.Id, grinder, SeedUtcDate(-1), SeedUtcDate(4), RentalStatus.Active,
-                "Renowacja ogrodzenia — szlifierka na 5 dni."),
-            NewRental(maria.Id, mower, SeedUtcDate(12), SeedUtcDate(15), RentalStatus.Pending,
-                "Pierwsze koszenie sezonu."),
-            NewRental(maria.Id, canon, SeedUtcDate(-75), SeedUtcDate(-72), RentalStatus.Completed,
-                "Materiały promocyjne do social mediów."),
-            NewRental(maria.Id, grinder, SeedUtcDate(-30), SeedUtcDate(-27), RentalStatus.Completed,
-                "Renowacja ogrodzenia — zakończone przed bieżącą aktywną rezerwacją."),
+            NewRental(client.Id, canon, SeedUtcDate(-2), SeedUtcDate(3), RentalStatus.Active,
+                "Aktywna rezerwacja — aparat w użyciu (status sprzętu: wypożyczony)."),
+            NewRental(client.Id, drill, SeedUtcDate(7), SeedUtcDate(10), RentalStatus.Pending,
+                "Oczekująca — remont łazienki, wiertarka na 3 dni."),
+            NewRental(client.Id, bike, SeedUtcDate(-60), SeedUtcDate(-57), RentalStatus.Completed,
+                "Zakończona — wycieczka w Bieszczady."),
+            NewRental(client.Id, drone, SeedUtcDate(14), SeedUtcDate(17), RentalStatus.Cancelled,
+                "Anulowana — zmiana planów podróży."),
+            NewRental(client.Id, mixer, SeedUtcDate(-45), SeedUtcDate(-42), RentalStatus.Completed,
+                "Zakończona — budowa tarasu."),
+            NewRental(client.Id, canon, SeedUtcDate(-90), SeedUtcDate(-87), RentalStatus.Completed,
+                "Zakończona — archiwalna sesja produktowa."),
+            NewRental(client.Id, grinder, SeedUtcDate(-1), SeedUtcDate(4), RentalStatus.Active,
+                "Aktywna — renowacja ogrodzenia (sprzęt niedostępny w katalogu)."),
+            NewRental(client.Id, mower, SeedUtcDate(12), SeedUtcDate(15), RentalStatus.Pending,
+                "Oczekująca — pierwsze koszenie sezonu."),
         };
 
         db.Rentals.AddRange(rentals);
@@ -283,51 +275,37 @@ public static class DbInitializer
 
     private static void SeedFavorites(AppDbContext db)
     {
-        var piotr = db.Users.FirstOrDefault(u => u.Email == "piotr@rentit.pl");
-        var maria = db.Users.FirstOrDefault(u => u.Email == "maria@rentit.pl");
-        if (piotr is null || maria is null)
+        var client = db.Users.FirstOrDefault(u => u.Email == ClientEmail);
+        if (client is null)
             return;
 
         var equipment = EquipmentByName(db);
 
-        var favoriteSpecs = new (string ClientEmail, string[] EquipmentNames)[]
+        var favoriteNames = new[]
         {
-            ("piotr@rentit.pl", new[]
-            {
-                "Aparat Canon EOS 90D",
-                "Dron DJI Mini 3",
-                "Rower górski Trek Marlin 7",
-            }),
-            ("maria@rentit.pl", new[]
-            {
-                "Wiertarko-wkrętarka Bosch GSR 18V",
-                "Kosiarka spalinowa Honda HRX 476",
-                "Betoniarka elektryczna 140L",
-            }),
+            "Aparat Canon EOS 90D",
+            "Dron DJI Mini 3",
+            "Rower górski Trek Marlin 7",
+            "Wiertarko-wkrętarka Bosch GSR 18V",
         };
 
-        foreach (var (clientEmail, equipmentNames) in favoriteSpecs)
+        foreach (var equipmentName in favoriteNames)
         {
-            var client = db.Users.First(u => u.Email == clientEmail);
+            if (!equipment.TryGetValue(equipmentName, out var item))
+                continue;
 
-            foreach (var equipmentName in equipmentNames)
+            var exists = db.FavoriteEquipment.Any(f =>
+                f.UserId == client.Id && f.EquipmentId == item.Id);
+
+            if (exists)
+                continue;
+
+            db.FavoriteEquipment.Add(new FavoriteEquipment
             {
-                if (!equipment.TryGetValue(equipmentName, out var item))
-                    continue;
-
-                var exists = db.FavoriteEquipment.Any(f =>
-                    f.UserId == client.Id && f.EquipmentId == item.Id);
-
-                if (exists)
-                    continue;
-
-                db.FavoriteEquipment.Add(new FavoriteEquipment
-                {
-                    UserId = client.Id,
-                    EquipmentId = item.Id,
-                    CreatedAt = DateTime.UtcNow.AddDays(-7),
-                });
-            }
+                UserId = client.Id,
+                EquipmentId = item.Id,
+                CreatedAt = DateTime.UtcNow.AddDays(-7),
+            });
         }
 
         db.SaveChanges();
@@ -367,7 +345,7 @@ public static class DbInitializer
                 EquipmentId = canon.Id,
                 DateFrom = SeedUtcDate(10),
                 DateTo = SeedUtcDate(13),
-                Reason = "Serwis obiektywu",
+                Reason = "Serwis obiektywu (nakłada się na aktywną rezerwację testowo)",
                 CreatedAt = DateTime.UtcNow,
             });
 
