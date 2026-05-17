@@ -8,10 +8,14 @@ import { Alert } from 'react-native';
 export function useMyEquipment() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const ownerId = user?.userId;
 
   const { data: myEquipment = [] } = useSuspenseQuery({
-    queryKey: ['equipment', 'mine', user?.userId],
-    queryFn: () => getMyEquipment(user!.userId),
+    queryKey: ['equipment', 'mine', ownerId],
+    queryFn: () => {
+      if (ownerId == null) throw new Error('Nie jesteś zalogowany');
+      return getMyEquipment();
+    },
   });
 
   const deleteMutation = useMutation({

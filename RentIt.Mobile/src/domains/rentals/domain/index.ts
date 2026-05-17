@@ -7,7 +7,16 @@ export {
   findRentalStatusId,
   parseRentalStatusId,
 } from './status';
-export { parseDate, daysBetween } from './duration';
+export {
+  addUtcDays,
+  daysBetween,
+  formatDate,
+  parseDate,
+  startOfToday,
+  startOfUtcCalendarDay,
+  toLocalYmd,
+  toUtcYmd,
+} from './dates';
 export {
   type BlockedRange,
   type RentalSlot,

@@ -1,8 +1,9 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
-import { ErrorAlertRecipe, StartupSplashScreen } from '@/src/shared/ui';
+import { ErrorAlertRecipe } from '@/src/shared/ui/recipes/error-alert';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
 import { ScrollView, View } from 'react-native';
-import { useRentalDetail } from '../../application';
+import { useRentalDetail } from '../../application/hooks/use-rental-detail';
 import { RENTAL_DETAIL_SCREEN } from '../../constants';
 import { RentalDetailContent } from '../recipes/rental-detail-content';
 

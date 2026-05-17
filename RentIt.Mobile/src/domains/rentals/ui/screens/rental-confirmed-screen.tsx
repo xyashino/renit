@@ -1,7 +1,7 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import { StartupSplashScreen } from '@/src/shared/ui';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
 import { RENTAL_CONFIRMED_SCREEN, ROUTES } from '../../constants';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';

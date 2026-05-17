@@ -1,9 +1,9 @@
 import { Text } from '@/src/shared/ui/components/text';
-import { SelectField, type SelectFieldOption } from '@/src/shared/ui';
-import { formatDate } from '@/src/shared/utils/date';
+import { SelectField, type SelectFieldOption } from './select-field';
 import { ActivityIndicator, View } from 'react-native';
 import { RENTAL_BOOKING_HORIZON_DAYS } from '../../constants';
 import type { RentalSlot } from '../../domain/availability';
+import { addUtcDays, formatDate, parseDate, toUtcYmd } from '../../domain/dates';
 
 type Props = {
   durationDays: number;
@@ -19,9 +19,8 @@ type Props = {
 
 function slotOptions(slots: RentalSlot[]): SelectFieldOption[] {
   return slots.map((slot) => {
-    const lastDay = new Date(`${slot.dateTo}T00:00:00.000Z`);
-    lastDay.setUTCDate(lastDay.getUTCDate() - 1);
-    const lastYmd = lastDay.toISOString().split('T')[0]!;
+    const exclusiveEnd = parseDate(slot.dateTo);
+    const lastYmd = exclusiveEnd ? toUtcYmd(addUtcDays(exclusiveEnd, -1)) : slot.dateTo;
 
     return {
       value: slot.dateFrom,

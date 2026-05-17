@@ -1,7 +1,8 @@
 import type { Rental } from '../domain';
 import { apiClient } from '@/src/shared/api/client';
+import { extractApiMessage } from '@/src/shared/api/errors';
 import type { Equipment } from '@/src/shared/domain/equipment';
-import { loadEquipmentById, loadEquipmentList } from '@/src/shared/infrastructure/equipment';
+import { loadEquipmentById } from '@/src/shared/infrastructure/equipment';
 import { parseRentalItem, parseRentalList } from './mappers';
 
 async function withEquipment(rentals: Rental[]): Promise<Rental[]> {
@@ -29,37 +30,24 @@ export async function getRentals(equipmentId?: number): Promise<Rental[]> {
   const { data, error } = await apiClient.GET('/api/rentals', {
     params: equipmentId != null ? { query: { equipmentId } } : undefined,
   });
-  if (error) throw new Error('Nie udało się załadować wypożyczeń');
+  if (error) {
+    throw new Error(extractApiMessage(error, 'Nie udało się załadować wypożyczeń'));
+  }
   return withEquipment(parseRentalList(data));
+}
+
+export async function getMyRentals(): Promise<Rental[]> {
+  return getRentals();
 }
 
 export async function getRentalById(id: number): Promise<Rental> {
   const { data, error } = await apiClient.GET('/api/rentals/{id}', {
     params: { path: { id } },
   });
-  if (error) throw new Error('Nie udało się załadować wypożyczenia');
+  if (error) {
+    throw new Error(extractApiMessage(error, 'Nie udało się załadować wypożyczenia'));
+  }
   if (!data) throw new Error('Nie znaleziono wypożyczenia');
   const [rental] = await withEquipment([parseRentalItem(data)]);
   return rental;
-}
-
-export async function getClientRentals(clientId: number): Promise<Rental[]> {
-  const rentals = await getRentals();
-  return rentals.filter((rental) => rental.clientId === clientId);
-}
-
-export async function getOwnerRentals(ownerId: number): Promise<Rental[]> {
-  const rentals = await getRentals();
-  const hasEquipmentOwner = rentals.some((rental) => rental.equipment?.userId != null);
-
-  if (hasEquipmentOwner) {
-    return rentals.filter((rental) => rental.equipment?.userId === ownerId);
-  }
-
-  const ownerEquipmentIds = new Set(
-    (await loadEquipmentList())
-      .filter((item) => item.userId === ownerId)
-      .map((item) => item.id)
-  );
-  return rentals.filter((rental) => ownerEquipmentIds.has(rental.equipmentId));
 }

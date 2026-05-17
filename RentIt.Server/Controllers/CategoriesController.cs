@@ -1,34 +1,25 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RentIt.Server.Data;
-using RentIt.Server.DTOs;
+using RentIt.Server.Features.Categories.Messages.DTOs;
+using RentIt.Server.Features.Categories.Messages.Queries;
 
 namespace RentIt.Server.Controllers;
 
 [ApiController]
 [Route("api/categories")]
-public class CategoriesController(AppDbContext db) : ControllerBase
+public class CategoriesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<IEnumerable<CategoryDto>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll()
-    {
-        var categories = await db.Categories
-            .OrderBy(c => c.Name)
-            .Select(c => new CategoryDto { Id = c.Id, Name = c.Name, Key = c.Key })
-            .ToListAsync();
-
-        return Ok(categories);
-    }
+    [ProducesResponseType(typeof(IEnumerable<CategoryDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll()
+        => Ok(await mediator.Send(new GetAllCategoriesQuery()));
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType<CategoryDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CategoryDto>> GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var category = await db.Categories.FindAsync(id);
-        return category is null
-            ? NotFound()
-            : Ok(new CategoryDto { Id = category.Id, Name = category.Name, Key = category.Key });
+        var category = await mediator.Send(new GetCategoryByIdQuery(id));
+        return category is null ? NotFound() : Ok(category);
     }
 }

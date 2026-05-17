@@ -1,14 +1,5 @@
-import { parseDate } from './duration';
-
-function addUtcDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function toUtcYmd(date: Date): string {
-  return date.toISOString().split('T')[0]!;
-}
+import dayjs from 'dayjs';
+import { parseDate } from './dates';
 
 /** Maps UI start date + duration to API period (exclusive `dateTo`). */
 export function rentalPeriodFromDuration(
@@ -18,12 +9,13 @@ export function rentalPeriodFromDuration(
   const from = parseDate(dateFromYmd);
   if (!from || durationDays < 1) return null;
 
-  const exclusiveEnd = addUtcDays(from, durationDays);
-  const lastInclusive = addUtcDays(exclusiveEnd, -1);
+  const fromDay = dayjs.utc(from);
+  const exclusiveEnd = fromDay.add(durationDays, 'day');
+  const lastInclusive = exclusiveEnd.subtract(1, 'day');
 
   return {
-    dateFromIso: from.toISOString(),
+    dateFromIso: fromDay.toISOString(),
     dateToIso: exclusiveEnd.toISOString(),
-    lastInclusiveYmd: toUtcYmd(lastInclusive),
+    lastInclusiveYmd: lastInclusive.format('YYYY-MM-DD'),
   };
 }

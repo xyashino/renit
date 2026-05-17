@@ -1,6 +1,6 @@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/src/shared/ui/components/form';
 import { Text } from '@/src/shared/ui/components/text';
-import { FormInputItem } from '@/src/shared/ui';
+import { FormInputItem } from '@/src/shared/ui/recipes/form-input-item';
 import { ROUTES } from '@/src/shared/auth';
 import { useSignUp } from '../../application/hooks/use-sign-up';
 import { AccountTypePicker } from '../components/account-type-picker';

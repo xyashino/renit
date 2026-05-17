@@ -1,6 +1,7 @@
 import { Text } from '@/src/shared/ui/components/text';
 import { cn } from '@/src/shared/utils';
-import { EmptyStateRecipe, ScreenHeader } from '@/src/shared/ui';
+import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
+import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
 import { useBrowse } from '../../application/hooks/use-browse';
 import { equipmentDetailHref } from '../../constants';
 import { useRouter } from 'expo-router';

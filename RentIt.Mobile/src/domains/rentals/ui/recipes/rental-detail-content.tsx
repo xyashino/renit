@@ -1,8 +1,8 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Card, CardContent, CardTitle } from '@/src/shared/ui/components/card';
-import { Image } from '@/src/domains/equipment';
+import { EquipmentImage } from '@/src/shared/ui/equipment';
 import { Text } from '@/src/shared/ui/components/text';
-import { formatDate } from '@/src/shared/utils/date';
+import { formatDate } from '../../domain/dates';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { View } from 'react-native';
 import type { Rental, RentalStatusKey } from '../../domain';
@@ -60,7 +60,7 @@ export function RentalDetailContent({
     <View className="gap-3">
       <Card className="py-0 overflow-hidden">
         <View className="h-36 bg-accent items-center justify-center overflow-hidden">
-          <Image
+          <EquipmentImage
             imageUrl={rental.equipment?.imageUrl}
             imageClassName="absolute inset-0"
             iconSize={32}

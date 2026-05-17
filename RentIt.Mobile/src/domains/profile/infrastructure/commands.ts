@@ -1,10 +1,15 @@
 import { apiClient } from '@/src/shared/api/client';
-import type { UserProfile } from '../domain/user-profile';
+import { extractApiMessage } from '@/src/shared/api/errors';
+import {
+  updateProfileRequestSchema,
+  type UpdateProfilePayload,
+} from '../application/schemas/profile';
 
-export async function updateUser(id: number, body: Partial<UserProfile>): Promise<void> {
+export async function updateUser(id: number, input: UpdateProfilePayload): Promise<void> {
+  const body = updateProfileRequestSchema.parse(input);
   const { error } = await apiClient.PUT('/api/users/{id}', {
     params: { path: { id } },
-    body: body as never,
+    body,
   });
-  if (error) throw new Error('Nie udało się zaktualizować profilu');
+  if (error) throw new Error(extractApiMessage(error, 'Nie udalo sie zaktualizowac profilu'));
 }

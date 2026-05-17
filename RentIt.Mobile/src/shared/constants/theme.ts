@@ -1,6 +1,3 @@
-import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native';
-import type { ViewStyle } from 'react-native';
-
 const BASE_THEME = {
   light: {
     background: 'hsl(204 12.1951% 91.9608%)',
@@ -99,77 +96,4 @@ const THEME = {
   },
 } as const;
 
-type ShadowScale = {
-  '2xs': ViewStyle;
-  xs: ViewStyle;
-  sm: ViewStyle;
-  DEFAULT: ViewStyle;
-  md: ViewStyle;
-  lg: ViewStyle;
-  xl: ViewStyle;
-  '2xl': ViewStyle;
-};
-
-const createShadow = (
-  color: string,
-  opacity: number,
-  elevation: number,
-  height = 2,
-  shadowRadius = 4
-): ViewStyle => ({
-  shadowColor: color,
-  shadowOffset: { width: 0, height },
-  shadowOpacity: opacity,
-  shadowRadius,
-  elevation,
-});
-
-const SHADOWS = {
-  light: {
-    '2xs': createShadow('#1a1a1a', 0.05, 1, 1, 3),
-    xs: createShadow('#1a1a1a', 0.05, 1, 1, 3),
-    sm: createShadow('#1a1a1a', 0.1, 2, 1, 3),
-    DEFAULT: createShadow('#1a1a1a', 0.1, 2, 1, 3),
-    md: createShadow('#1a1a1a', 0.1, 3, 2, 4),
-    lg: createShadow('#1a1a1a', 0.1, 4, 4, 6),
-    xl: createShadow('#1a1a1a', 0.1, 8, 8, 10),
-    '2xl': createShadow('#1a1a1a', 0.25, 12, 1, 3),
-  },
-  dark: {
-    '2xs': createShadow('#1a1a1a', 0.05, 1, 1, 3),
-    xs: createShadow('#1a1a1a', 0.05, 1, 1, 3),
-    sm: createShadow('#1a1a1a', 0.1, 2, 1, 3),
-    DEFAULT: createShadow('#1a1a1a', 0.1, 2, 1, 3),
-    md: createShadow('#1a1a1a', 0.1, 3, 2, 4),
-    lg: createShadow('#1a1a1a', 0.1, 4, 4, 6),
-    xl: createShadow('#1a1a1a', 0.1, 8, 8, 10),
-    '2xl': createShadow('#1a1a1a', 0.25, 12, 1, 3),
-  },
-} as const satisfies Record<'light' | 'dark', ShadowScale>;
-
-const NAV_THEME: Record<'light' | 'dark', Theme> = {
-  light: {
-    ...DefaultTheme,
-    colors: {
-      background: THEME.light.background,
-      border: THEME.light.border,
-      card: THEME.light.card,
-      notification: THEME.light.destructive,
-      primary: THEME.light.primary,
-      text: THEME.light.foreground,
-    },
-  },
-  dark: {
-    ...DarkTheme,
-    colors: {
-      background: THEME.dark.background,
-      border: THEME.dark.border,
-      card: THEME.dark.card,
-      notification: THEME.dark.destructive,
-      primary: THEME.dark.primary,
-      text: THEME.dark.foreground,
-    },
-  },
-};
-
-export { NAV_THEME, SHADOWS, THEME };
+export { THEME };

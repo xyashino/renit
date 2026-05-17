@@ -1,13 +1,12 @@
-import { getEquipmentBlockedRanges } from '@/src/domains/equipment/infrastructure/queries';
+import { getEquipmentBlockedRanges } from '@/src/domains/availability';
 import { useAuth } from '@/src/shared/auth';
-import { daysBetween, parseDate } from '@/src/shared/domain';
-import { Alert } from 'react-native';
-import { toLocalYmd, startOfToday } from '@/src/shared/utils/date';
+import { daysBetween, parseDate, startOfToday } from '../../domain/dates';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { Alert } from 'react-native';
 import {
   RENTAL_BOOKING_HORIZON_DAYS,
   RENTAL_DURATION_OPTIONS,
@@ -15,8 +14,9 @@ import {
 } from '../../constants';
 import { computeAvailableSlots } from '../../domain/availability';
 import { rentalPeriodFromDuration } from '../../domain/rental-period';
-import { createRental } from '../../infrastructure';
-import { newRentalSchema, type NewRentalFormData } from '../schemas/rental';
+import { createRental } from '../../infrastructure/commands';
+import { newRentalSchema, type NewRentalFormData } from '../schemas/forms';
+import { useRentalBookingSlots } from './use-rental-booking-slots';
 
 type UseNewRentalOptions = {
   equipmentId: number;
@@ -24,22 +24,10 @@ type UseNewRentalOptions = {
   pickupAddress: string;
 };
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
 export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNewRentalOptions) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-
-  const searchFromYmd = useMemo(() => toLocalYmd(startOfToday()), []);
-  const searchToYmd = useMemo(
-    () => toLocalYmd(addDays(startOfToday(), RENTAL_BOOKING_HORIZON_DAYS)),
-    []
-  );
 
   const form = useForm<NewRentalFormData>({
     resolver: zodResolver(newRentalSchema),
@@ -49,28 +37,8 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
   const dateFrom = form.watch('dateFrom');
   const durationDays = form.watch('durationDays');
 
-  const blockedQuery = useQuery({
-    queryKey: ['equipment', equipmentId, 'blocked', searchFromYmd, searchToYmd],
-    queryFn: () => getEquipmentBlockedRanges(equipmentId, searchFromYmd, searchToYmd),
-  });
-
-  const availableSlots = useMemo(() => {
-    if (!blockedQuery.data) return [];
-    return computeAvailableSlots(blockedQuery.data, durationDays, {
-      horizonDays: RENTAL_BOOKING_HORIZON_DAYS,
-      searchFrom: startOfToday(),
-    });
-  }, [blockedQuery.data, durationDays]);
-
-  useEffect(() => {
-    if (!availableSlots.length) {
-      if (dateFrom) form.setValue('dateFrom', '');
-      return;
-    }
-    if (!availableSlots.some((slot) => slot.dateFrom === dateFrom)) {
-      form.setValue('dateFrom', availableSlots[0]!.dateFrom, { shouldValidate: true });
-    }
-  }, [availableSlots, dateFrom, form]);
+  const { availableSlots, searchFromYmd, searchToYmd, slotsLoading, slotsError } =
+    useRentalBookingSlots(equipmentId, durationDays, dateFrom, form);
 
   const period = useMemo(
     () => (dateFrom ? rentalPeriodFromDuration(dateFrom, durationDays) : null),
@@ -88,8 +56,8 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
     !!pickupAddress.trim() &&
     !!period &&
     availableSlots.some((slot) => slot.dateFrom === dateFrom) &&
-    !blockedQuery.isLoading &&
-    !blockedQuery.isError;
+    !slotsLoading &&
+    !slotsError;
 
   const mutation = useMutation({
     mutationFn: async (payload: NewRentalFormData) => {
@@ -146,8 +114,8 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
     totalPrice,
     availableSlots,
     durationOptions,
-    slotsLoading: blockedQuery.isLoading,
-    slotsError: blockedQuery.isError,
+    slotsLoading,
+    slotsError,
     canSubmit,
     isPending: mutation.isPending,
     submit: form.handleSubmit((data) => mutation.mutate(data)),

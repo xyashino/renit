@@ -1,7 +1,11 @@
 import { Text } from '@/src/shared/ui/components/text';
 import { cn } from '@/src/shared/utils';
-import { EmptyStateRecipe, ErrorAlertRecipe, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
-import { RENTAL_TABS, useRentalsList, type RentalTab } from '../../application';
+import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
+import { ErrorAlertRecipe } from '@/src/shared/ui/recipes/error-alert';
+import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
+import { useRentalsList } from '../../application/hooks/use-rentals-list';
+import { RENTAL_TABS, type RentalTab } from '../../constants';
 import {
   RENTALS_SCREEN_CLIENT,
   RENTALS_SCREEN_OWNER,

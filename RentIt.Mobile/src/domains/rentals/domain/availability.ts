@@ -1,24 +1,17 @@
-import { parseDate } from './duration';
+import type { BlockedRange } from '@/src/domains/availability/domain/blocked-range';
+import {
+  addUtcDays,
+  parseDate,
+  startOfUtcCalendarDay,
+  toUtcYmd,
+} from './dates';
 
-export type BlockedRange = {
-  dateFrom: string;
-  dateTo: string;
-};
+export type { BlockedRange };
 
 export type RentalSlot = {
   dateFrom: string;
   dateTo: string;
 };
-
-function addUtcDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function toUtcYmd(date: Date): string {
-  return date.toISOString().split('T')[0]!;
-}
 
 function blockedRangeBoundary(iso: string): Date {
   const ymd = iso.includes('T') ? iso.split('T')[0]! : iso;
@@ -29,7 +22,6 @@ function rangesOverlap(start: Date, end: Date, blockFrom: Date, blockTo: Date): 
   return blockFrom < end && start < blockTo;
 }
 
-/** `dateTo` is the last inclusive rental day. */
 export function isRentalRangeAvailable(
   dateFrom: string,
   dateTo: string,
@@ -59,9 +51,7 @@ export function computeAvailableSlots(
 
   const horizonDays = options?.horizonDays ?? 30;
   const anchor = options?.searchFrom ?? new Date();
-  const today = new Date(
-    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate())
-  );
+  const today = startOfUtcCalendarDay(anchor);
 
   const blocks = blockedRanges
     .map((range) => ({

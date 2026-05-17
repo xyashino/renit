@@ -1,9 +1,9 @@
 import { OwnerRow } from '@/src/domains/rentals';
-import { getRentals } from '@/src/domains/rentals/infrastructure';
-import { EmptyStateRecipe, ErrorAlertRecipe, ScreenHeader, StartupSplashScreen } from '@/src/shared/ui';
-import { getEquipmentById } from '../../infrastructure/queries';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
+import { ErrorAlertRecipe } from '@/src/shared/ui/recipes/error-alert';
+import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
+import { useEquipmentRentals } from '../../application/hooks/use-equipment-rentals';
 import { Suspense } from 'react';
 import { ScrollView, View } from 'react-native';
 
@@ -16,18 +16,7 @@ export function EquipmentRentalsScreen() {
 }
 
 function EquipmentRentalsScreenContent() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const equipmentId = Number(id);
-
-  const { data: equipment } = useSuspenseQuery({
-    queryKey: ['equipment', equipmentId],
-    queryFn: () => getEquipmentById(equipmentId),
-  });
-
-  const { data: equipmentRentals = [], isError, refetch } = useSuspenseQuery({
-    queryKey: ['rentals', 'equipment', equipmentId],
-    queryFn: () => getRentals(equipmentId),
-  });
+  const { equipment, equipmentRentals, isError, refetch } = useEquipmentRentals();
 
   return (
     <View className="flex-1 bg-background">

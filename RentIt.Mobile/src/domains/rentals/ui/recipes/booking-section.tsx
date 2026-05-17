@@ -2,7 +2,7 @@ import { Button } from '@/src/shared/ui/components/button';
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { Separator } from '@/src/shared/ui/components/separator';
 import { Text } from '@/src/shared/ui/components/text';
-import { FormTextareaItem } from '@/src/shared/ui';
+import { FormTextareaItem } from '@/src/shared/ui/recipes/form-textarea-item';
 import { useNewRental } from '../../application/hooks/use-new-rental';
 import { PickupLocation } from '../components/pickup-location';
 import { RentalSlotSelect } from '../components/rental-slot-select';

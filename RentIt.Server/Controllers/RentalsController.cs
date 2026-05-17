@@ -1,270 +1,149 @@
-using System.Security.Claims;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RentIt.Server.Data;
-using RentIt.Server.DTOs;
-using RentIt.Server.Models;
+using RentIt.Server.Common;
+using RentIt.Server.Features.Rentals.Messages.Commands;
+using RentIt.Server.Features.Rentals.Messages.DTOs;
+using RentIt.Server.Features.Rentals.Messages.Queries;
 
 namespace RentIt.Server.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/rentals")]
-public class RentalsController(AppDbContext db) : ControllerBase
+public class RentalsController(IMediator mediator) : ControllerBase
 {
-    private int? CurrentUserId =>
-        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
-
     [HttpGet]
-    [ProducesResponseType<IEnumerable<RentalDto>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<RentalDto>>> GetAll([FromQuery] int? equipmentId)
+    [ProducesResponseType(typeof(IEnumerable<RentalDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAll([FromQuery] int? equipmentId)
     {
-        if (CurrentUserId is null)
-            return Forbid();
-
-        var meId = CurrentUserId.Value;
-
-        var query = db.Rentals
-            .Include(r => r.Client)
-            .Include(r => r.Equipment)
-            .Where(r => r.ClientId == meId || r.Equipment!.UserId == meId);
-
-        if (equipmentId.HasValue)
-            query = query.Where(r => r.EquipmentId == equipmentId.Value);
-
-        var items = await query.ToListAsync();
-        return Ok(items.Select(ToDto));
+        try
+        {
+            return Ok(await mediator.Send(new GetRentalsQuery(User.GetUserId(), equipmentId)));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType<RentalDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(RentalDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RentalDto>> GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var rental = await db.Rentals
-            .Include(r => r.Client)
-            .Include(r => r.Equipment)
-            .FirstOrDefaultAsync(r => r.Id == id);
-
-        if (rental is null)
-            return NotFound();
-
-        if (!IsParticipant(rental))
-            return Forbid();
-
-        return Ok(ToDto(rental));
+        try
+        {
+            return Ok(await mediator.Send(new GetRentalByIdQuery(User.GetUserId(), id)));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpPost]
-    [ProducesResponseType<RentalDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<RentalDto>> Create([FromBody] CreateRentalDto dto)
+    [ProducesResponseType(typeof(RentalDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Create([FromBody] CreateRentalDto dto)
     {
-        if (CurrentUserId is null)
-            return Forbid();
-
-        var clientId = CurrentUserId.Value;
-
-        var client = await db.Users.FindAsync(clientId);
-        if (client is null || client.AccountType != UserAccountType.Client)
-            return Forbid();
-
-        if (dto.DateFrom >= dto.DateTo)
-            return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
-
-        var equipment = await db.Equipment.FindAsync(dto.EquipmentId);
-        if (equipment is null)
-            return BadRequest(new ErrorResponseDto { Message = "Sprzet nie istnieje" });
-
-        if (equipment.UserId == clientId)
-            return BadRequest(new ErrorResponseDto { Message = "Nie mozesz wypozyczyc wlasnego sprzetu" });
-
-        if (await HasAvailabilityConflict(dto.EquipmentId, dto.DateFrom, dto.DateTo))
-            return BadRequest(new ErrorResponseDto { Message = "Sprzet nie jest dostepny w wybranym terminie" });
-
-        var rental = new Rental
+        try
         {
-            DateFrom = dto.DateFrom,
-            DateTo = dto.DateTo,
-            Notes = dto.Notes,
-            Address = equipment.Address,
-            ClientId = clientId,
-            EquipmentId = equipment.Id,
-            Status = RentalStatus.Pending,
-        };
-
-        db.Rentals.Add(rental);
-        await db.SaveChangesAsync();
-
-        var created = await db.Rentals
-            .Include(r => r.Client)
-            .Include(r => r.Equipment)
-            .FirstAsync(r => r.Id == rental.Id);
-
-        return CreatedAtAction(nameof(GetById), new { id = rental.Id }, ToDto(created));
+            var created = await mediator.Send(new CreateRentalCommand(User.GetUserId(), dto));
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateRentalDto dto)
     {
-        var rental = await db.Rentals.FindAsync(id);
-        if (rental is null)
-            return NotFound();
-
-        if (CurrentUserId != rental.ClientId)
-            return Forbid();
-
-        if (rental.Status != RentalStatus.Pending)
-            return BadRequest(new ErrorResponseDto { Message = "Edycja jest mozliwa tylko dla oczekujacych rezerwacji" });
-
-        if (dto.DateFrom >= dto.DateTo)
-            return BadRequest(new ErrorResponseDto { Message = "dateFrom musi byc wczesniejsze niz dateTo" });
-
-        if (await HasAvailabilityConflict(rental.EquipmentId, dto.DateFrom, dto.DateTo, id))
-            return BadRequest(new ErrorResponseDto { Message = "Sprzet nie jest dostepny w wybranym terminie" });
-
-        rental.DateFrom = dto.DateFrom;
-        rental.DateTo = dto.DateTo;
-        rental.Notes = dto.Notes;
-
-        await db.SaveChangesAsync();
-        return NoContent();
+        try
+        {
+            await mediator.Send(new UpdateRentalCommand(User.GetUserId(), id, dto));
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpPatch("{id:int}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ErrorResponseDto>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateRentalStatusDto dto)
     {
-        var rental = await db.Rentals
-            .Include(r => r.Equipment)
-            .FirstOrDefaultAsync(r => r.Id == id);
-
-        if (rental is null)
-            return NotFound();
-
-        if (CurrentUserId is null)
-            return Forbid();
-
-        var ownerId = rental.Equipment?.UserId;
-        var isOwner = ownerId == CurrentUserId;
-        var isClient = rental.ClientId == CurrentUserId;
-
-        if (!isOwner && !isClient)
-            return Forbid();
-
-        if (!IsTransitionAllowed(rental.Status, dto.Status, isOwner, isClient))
-            return BadRequest(new ErrorResponseDto { Message = "Niedozwolone przejscie statusu" });
-
-        rental.Status = dto.Status;
-        await db.SaveChangesAsync();
-        return NoContent();
+        try
+        {
+            await mediator.Send(new UpdateRentalStatusCommand(User.GetUserId(), id, dto));
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        var rental = await db.Rentals.FindAsync(id);
-        if (rental is null)
-            return NotFound();
-
-        if (CurrentUserId != rental.ClientId)
-            return Forbid();
-
-        if (rental.Status != RentalStatus.Pending && rental.Status != RentalStatus.Cancelled)
-            return BadRequest(new ErrorResponseDto { Message = "Usun rezerwacje przed potwierdzeniem lub po anulowaniu" });
-
-        db.Rentals.Remove(rental);
-        await db.SaveChangesAsync();
-        return NoContent();
-    }
-
-    private bool IsParticipant(Rental rental) =>
-        CurrentUserId == rental.ClientId || CurrentUserId == rental.Equipment?.UserId;
-
-    private static bool IsTransitionAllowed(RentalStatus current, RentalStatus next, bool isOwner, bool isClient) =>
-        (current, next) switch
+        try
         {
-            (RentalStatus.Pending, RentalStatus.Active) => isOwner,
-            (RentalStatus.Active, RentalStatus.Completed) => isOwner,
-            (RentalStatus.Pending, RentalStatus.Cancelled) => isClient || isOwner,
-            (RentalStatus.Active, RentalStatus.Cancelled) => isClient || isOwner,
-            _ => false,
-        };
-
-    private static RentalDto ToDto(Rental r) =>
-        new()
+            await mediator.Send(new DeleteRentalCommand(User.GetUserId(), id));
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
         {
-            Id = r.Id,
-            DateFrom = r.DateFrom,
-            DateTo = r.DateTo,
-            Notes = r.Notes,
-            Address = r.Address,
-            ClientId = r.ClientId,
-            EquipmentId = r.EquipmentId,
-            Status = r.Status,
-            Client = ToUserDto(r.Client),
-            Equipment = r.Equipment is null ? null : ToEquipmentDto(r.Equipment),
-        };
-
-    private static EquipmentDto ToEquipmentDto(Equipment e) =>
-        new()
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
         {
-            Id = e.Id,
-            Name = e.Name,
-            Description = e.Description,
-            ImageUrl = e.ImageUrl,
-            PricePerDay = e.PricePerDay,
-            Deposit = e.Deposit,
-            Address = e.Address,
-            UserId = e.UserId,
-            Status = e.Status,
-        };
-
-    private static UserDto? ToUserDto(User? u) =>
-        u is null
-            ? null
-            : new UserDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email,
-                AccountType = u.AccountType,
-                CreatedAt = u.CreatedAt,
-            };
-
-    private async Task<bool> HasAvailabilityConflict(
-        int equipmentId,
-        DateTime dateFrom,
-        DateTime dateTo,
-        int? ignoredRentalId = null)
-    {
-        var rentalConflict = await db.Rentals.AnyAsync(r =>
-            r.EquipmentId == equipmentId &&
-            (!ignoredRentalId.HasValue || r.Id != ignoredRentalId.Value) &&
-            (r.Status == RentalStatus.Pending || r.Status == RentalStatus.Active) &&
-            r.DateFrom < dateTo &&
-            dateFrom < r.DateTo);
-
-        if (rentalConflict)
-            return true;
-
-        return await db.EquipmentAvailabilityBlocks.AnyAsync(b =>
-            b.EquipmentId == equipmentId &&
-            b.DateFrom < dateTo &&
-            dateFrom < b.DateTo);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 }

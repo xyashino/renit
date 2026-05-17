@@ -16,10 +16,6 @@ export function findStatusById(id: number): Status | undefined {
   return STATUSES.find((status) => status.id === id);
 }
 
-export function findStatusByKey(key: StatusKey): Status | undefined {
-  return STATUSES.find((status) => status.key === key);
-}
-
 export function findStatusId(key: StatusKey): number | undefined {
   return STATUSES.find((status) => status.key === key)?.id;
 }

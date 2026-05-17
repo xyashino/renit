@@ -18,6 +18,9 @@
       "@inventory/*": [
         "./src/domains/inventory/*",
       ],
+      "@availability/*": [
+        "./src/domains/availability/*",
+      ],
       "@profile/*": [
         "./src/domains/profile/*",
       ]

@@ -1,4 +1,4 @@
-import { FormInputItem } from '@/src/shared/ui';
+import { FormInputItem } from '@/src/shared/ui/recipes/form-input-item';
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { ROUTES } from '@/src/shared/auth';

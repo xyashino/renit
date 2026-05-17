@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/compon
 import { Form, FormField } from '@/src/shared/ui/components/form';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import { FormInputItem, FormTextareaItem } from '@/src/shared/ui';
+import { FormInputItem } from '@/src/shared/ui/recipes/form-input-item';
+import { FormTextareaItem } from '@/src/shared/ui/recipes/form-textarea-item';
 import type { Category } from '@/src/shared/domain/category';
-import type { EquipmentFormData } from '../../application/schemas/equipment';
+import type { EquipmentFormData } from '../../application/schemas/forms';
 import { FormCategoryItem } from './form-category-item';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { UseFormReturn } from 'react-hook-form';

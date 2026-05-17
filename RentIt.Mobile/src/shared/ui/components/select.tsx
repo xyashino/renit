@@ -1,15 +1,21 @@
 import { Icon } from '@/src/shared/ui/components/icon';
-import { NativeOnlyAnimatedView } from '@/src/shared/ui/components/native-only-animated-view';
 import { TextClassContext } from '@/src/shared/ui/components/text';
 import { cn } from '@/src/shared/utils';
 import * as SelectPrimitive from '@rn-primitives/select';
 import { Check, ChevronDown, ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
 import * as React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
 type Option = SelectPrimitive.Option;
+
+function NativeOnlyAnimatedView(props: React.ComponentProps<typeof Animated.View>) {
+  if (Platform.OS === 'web') {
+    return <>{props.children as React.ReactNode}</>;
+  }
+  return <Animated.View {...props} />;
+}
 
 const Select = SelectPrimitive.Root;
 

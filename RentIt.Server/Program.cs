@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RentIt.Server.Data;
+using RentIt.Server.Features.Auth.Providers;
+using RentIt.Server.Features.Equipment.Providers;
+using RentIt.Server.Features.Rentals.Providers;
+using System.Reflection;
 using System.Text;
 
 namespace RentIt.Server;
@@ -11,13 +15,24 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        RegisterDbContext(builder);
+        RegisterDbContextAndMediatR(builder);
         RegisterAuthenticationAndAuthorization(builder);
+        RegisterProviders(builder);
         RegisterControllersAndOpenApi(builder);
         SetUpCorsPolicy(builder);
 
         var app = builder.Build();
-        ConfigureDevelopment(app);
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/openapi/v1.json", "RentIt API v1");
+                options.RoutePrefix = "swagger";
+            });
+            ApplyDatabaseMigrations(app);
+        }
 
         app.UseCors("AllowAll");
         app.UseAuthentication();
@@ -26,16 +41,25 @@ public class Program
         app.Run();
     }
 
+    private static void RegisterDbContextAndMediatR(WebApplicationBuilder builder)
+    {
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+    }
+
+    private static void RegisterProviders(WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
+        builder.Services.AddScoped<IEquipmentCategorySync, EquipmentCategorySync>();
+        builder.Services.AddScoped<IRentalAvailabilityChecker, RentalAvailabilityChecker>();
+    }
+
     private static void RegisterControllersAndOpenApi(WebApplicationBuilder builder)
     {
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
-    }
-
-    private static void RegisterDbContext(WebApplicationBuilder builder)
-    {
-        builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
     }
 
     private static void RegisterAuthenticationAndAuthorization(WebApplicationBuilder builder)
@@ -118,14 +142,11 @@ public class Program
         return configuredOrigins.Where(o => !string.Equals(o, "*", StringComparison.OrdinalIgnoreCase)).ToArray();
     }
 
-    private static void ConfigureDevelopment(WebApplication app)
+    private static void ApplyDatabaseMigrations(WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
-        {
-            return;
-        }
-
         using var scope = app.Services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
         try
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -134,11 +155,9 @@ public class Program
         }
         catch (Exception ex)
         {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Blad podczas migracji bazy danych");
-            throw;
+            logger.LogError(
+                ex,
+                "Migracja bazy nie powiodla sie. Uruchom SQL Server: docker compose -f docker-compose-db.yml up -d");
         }
-
-        app.MapOpenApi();
     }
 }

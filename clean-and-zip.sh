@@ -74,10 +74,25 @@ echo "✅ Cleaning complete!"
 ZIP_NAME="KochaneZaoczkiPMAB2026-$(date +%Y%m%d-%H%M).zip"
 echo "📦 Creating zip archive: $ZIP_NAME..."
 cd "$(dirname "$PROJECT_DIR")"
-zip -r "$ZIP_NAME" "$(basename "$PROJECT_DIR")" \
-  -x "*/node_modules/*" -x "*/.git/*" -x "*/bin/*" -x "*/obj/*" \
-  -x "*/ios/Pods/*" -x "*/ios/build/*" -x "*/android/build/*" -x "*/android/app/build/*" \
-  -x "*/android/.gradle/*" -x "*/.metro/*" -x "*/.expo/*" -x "*/.react-native/*"
+
+if command -v zip >/dev/null 2>&1; then
+    zip -r "$ZIP_NAME" "$(basename "$PROJECT_DIR")" \
+      -x "*/node_modules/*" -x "*/.git/*" -x "*/bin/*" -x "*/obj/*" \
+      -x "*/ios/Pods/*" -x "*/ios/build/*" -x "*/android/build/*" -x "*/android/app/build/*" \
+      -x "*/android/.gradle/*" -x "*/.metro/*" -x "*/.expo/*" -x "*/.react-native/*"
+elif command -v tar.exe >/dev/null 2>&1; then
+    echo "⚠️ 'zip' command not found. Using Windows tar.exe..."
+    tar.exe -a -c -f "$ZIP_NAME" \
+      --exclude="*/.git/*" \
+      --exclude="*/node_modules/*" \
+      --exclude="*/bin/*" \
+      --exclude="*/obj/*" \
+      "$(basename "$PROJECT_DIR")"
+else
+    echo "⚠️ 'zip' not found. Using PowerShell..."
+    powershell.exe -NoProfile -Command "Compress-Archive -Path '$(basename "$PROJECT_DIR")\*' -DestinationPath '$ZIP_NAME' -Force"
+fi
+
 mv "$ZIP_NAME" "$PROJECT_DIR/"
 
 echo ""

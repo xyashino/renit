@@ -12,38 +12,27 @@ const SUPPORTED_CATEGORY_KEYS = new Set([
   'sports-and-recreation',
 ]);
 
-type CategoryDto = {
+export type CategoryDtoInput = {
   id?: number;
   name?: string;
   key?: string;
-  Id?: number;
-  Name?: string;
-  Key?: string;
 };
 
-function normalizeCategoryDto(dto: CategoryDto) {
-  return {
-    id: Number(dto.id ?? dto.Id),
-    key: String(dto.key ?? dto.Key ?? '').trim(),
-    label: String(dto.name ?? dto.Name ?? '').trim(),
-  };
-}
-
-export function mapCategory(dto: CategoryDto): Category | null {
-  const { id, key, label } = normalizeCategoryDto(dto);
-  if (!Number.isFinite(id) || !key || !SUPPORTED_CATEGORY_KEYS.has(key)) return null;
+export function mapCategory(dto: CategoryDtoInput): Category | null {
+  const id = dto.id;
+  const key = String(dto.key ?? '').trim();
+  const label = String(dto.name ?? '').trim();
+  if (id == null || !Number.isFinite(id) || !key || !SUPPORTED_CATEGORY_KEYS.has(key)) {
+    return null;
+  }
 
   return { id, key, label };
 }
 
-export function mapCategoryList(items: CategoryDto[]): Category[] {
+export function mapCategoryList(items: CategoryDtoInput[]): Category[] {
   return items
     .map((item) => mapCategory(item))
     .filter((category): category is Category => category != null);
-}
-
-export function findCategoryById(categories: Category[], id: number): Category | undefined {
-  return categories.find((category) => category.id === id);
 }
 
 export function formatCategoryLabels(categories: Category[]): string {

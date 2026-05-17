@@ -1,4 +1,5 @@
-import { EmptyStateRecipe, ScreenHeader } from '@/src/shared/ui';
+import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
+import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
 import { useMyEquipment } from '../../application/hooks/use-my-equipment';
 import {
   equipmentAddHref,

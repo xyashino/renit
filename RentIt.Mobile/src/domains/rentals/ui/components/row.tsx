@@ -1,7 +1,7 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import { formatDate } from '@/src/shared/utils/date';
+import { formatDate } from '../../domain/dates';
 import type { Rental, RentalStatusKey } from '../../domain';
 import { StatusBadge } from './badge';
 import { MaterialIcons } from '@expo/vector-icons';

@@ -2,7 +2,6 @@ import { useAuth } from '@/src/shared/auth';
 import { daysBetween, findRentalStatusId, type RentalStatusKey } from '../../domain';
 import { getRentalById, updateRentalStatus } from '../../infrastructure';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { confirmAction } from '@/src/shared/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -28,7 +27,10 @@ export function useRentalDetail() {
     refetch,
   } = useQuery({
     queryKey: ['rental', rentalId],
-    queryFn: () => getRentalById(rentalId!),
+    queryFn: () => {
+      if (rentalId == null) throw new Error('Nieprawidłowe wypożyczenie');
+      return getRentalById(rentalId);
+    },
     enabled: rentalId != null,
   });
 

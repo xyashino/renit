@@ -1,24 +1,12 @@
-import { ScreenHeader } from '@/src/shared/ui';
+import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
-import { ROUTES } from '../../constants';
-import { useAuth } from '@/src/shared/auth';
-import { useRouter } from 'expo-router';
-import { useProfileForm } from '../../application/hooks/use-profile-form';
+import { useProfile } from '../../application/hooks/use-profile';
 import { ProfileForm } from '../recipes/profile-form';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 export function ProfileScreen() {
-  const { user, clearSession } = useAuth();
-  const accountType = user?.accountType ?? null;
-  const router = useRouter();
-  const { form, onSubmit, isPending } = useProfileForm();
-
-  async function handleLogout() {
-    await clearSession();
-    router.replace(ROUTES.SIGN_IN);
-    Alert.alert('Wylogowano');
-  }
+  const { form, onSubmit, isPending, accountType, onLogout } = useProfile();
 
   return (
     <KeyboardAvoidingView
@@ -44,7 +32,7 @@ export function ProfileScreen() {
             isPending={isPending}
           />
 
-          <Button variant="destructive" className="h-12 rounded-xl" onPress={handleLogout}>
+          <Button variant="destructive" className="h-12 rounded-xl" onPress={onLogout}>
             <Text variant="small" className="text-destructive-foreground font-semibold">
               Wyloguj
             </Text>

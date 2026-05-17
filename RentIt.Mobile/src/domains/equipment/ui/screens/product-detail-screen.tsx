@@ -2,7 +2,9 @@ import { Button } from '@/src/shared/ui/components/button';
 import { Card, CardContent, CardTitle } from '@/src/shared/ui/components/card';
 import { Text } from '@/src/shared/ui/components/text';
 import { THEME } from '@/src/shared/constants/theme';
-import { ErrorAlertRecipe, NotFoundRecipe, StartupSplashScreen } from '@/src/shared/ui';
+import { ErrorAlertRecipe } from '@/src/shared/ui/recipes/error-alert';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
+import { NotFoundRecipe } from '../recipes/not-found';
 import { BookingSection } from '@/src/domains/rentals';
 import { useProductDetail } from '../../application/hooks/use-product-detail';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,7 +12,7 @@ import { useColorScheme } from 'nativewind';
 import { Suspense } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { formatCategoryLabels } from '@/src/shared/domain/category';
-import { Image } from '../components/image';
+import { EquipmentImage } from '@/src/shared/ui/equipment';
 
 export function ProductDetailScreen() {
   return (
@@ -75,7 +77,7 @@ function ProductDetailScreenContent() {
         contentContainerStyle={{ paddingBottom: 32 }}
       >
         <View className="rounded-xl overflow-hidden h-40 bg-accent mb-3 mt-3">
-          <Image
+          <EquipmentImage
             imageUrl={equipment.imageUrl}
             iconSize={72}
             imageClassName="absolute inset-0"

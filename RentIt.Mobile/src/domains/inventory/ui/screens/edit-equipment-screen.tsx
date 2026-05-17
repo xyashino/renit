@@ -1,4 +1,4 @@
-import { StartupSplashScreen } from '@/src/shared/ui';
+import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
 import { useEditEquipment } from '../../application/hooks/use-edit-equipment';
 import { FormEquipment } from '../recipes/form-equipment';
 import { Suspense } from 'react';
