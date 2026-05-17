@@ -38,12 +38,9 @@ export const RENTAL_STATUSES: RentalStatus[] = [
   { id: 3, key: 'cancelled', label: 'Anulowane' },
 ];
 
-export const RENTAL_DURATION_OPTIONS = [1, 2, 3, 5, 7, 14] as const;
+export const RENTAL_MIN_DURATION_DAYS = 1;
 
-export type RentalDurationDays = (typeof RENTAL_DURATION_OPTIONS)[number];
-
-export const RENTAL_MIN_DURATION_DAYS = RENTAL_DURATION_OPTIONS[0];
-export const RENTAL_MAX_DURATION_DAYS = RENTAL_DURATION_OPTIONS[RENTAL_DURATION_OPTIONS.length - 1];
+export const RENTAL_MAX_DURATION_DAYS = 30;
 
 /** How far ahead to search for available start dates. */
 export const RENTAL_SLOT_HORIZON_DAYS = 90;

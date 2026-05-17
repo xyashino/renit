@@ -10,4 +10,5 @@ export {
 } from './constants';
 export { AuthProvider } from './application/provider/auth-provider';
 export { useAuth } from './application/hooks/use-auth';
+export { useStorageState } from './application/hooks/use-storage-state';
 export type { ApiSessionPayload, AuthSession, AuthUser } from './domain/types';

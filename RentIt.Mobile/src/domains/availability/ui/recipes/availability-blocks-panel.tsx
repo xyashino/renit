@@ -1,6 +1,7 @@
 import { useAvailabilityBlocks } from '../../application/hooks/use-availability-blocks';
 import { Button } from '@/src/shared/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/components/card';
+import { Form, FormField } from '@/src/shared/ui/components/form';
 import { Input } from '@/src/shared/ui/components/input';
 import { Separator } from '@/src/shared/ui/components/separator';
 import { Text } from '@/src/shared/ui/components/text';
@@ -15,8 +16,10 @@ type Props = {
 };
 
 export function AvailabilityBlocksPanel({ equipmentId }: Props) {
-  const { equipment, blocks, form, setForm, saveMutation, confirmDelete } =
+  const { equipment, blocks, form, submit, saveMutation, confirmDelete } =
     useAvailabilityBlocks(equipmentId);
+
+  const minDate = startOfToday();
 
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 80 }}>
@@ -33,28 +36,50 @@ export function AvailabilityBlocksPanel({ equipmentId }: Props) {
         </CardHeader>
         <Separator />
         <CardContent className="px-4 pt-4 pb-4 gap-3">
-          <YmdDateField
-            value={form.dateFrom}
-            onChange={(dateFrom) => setForm((prev) => ({ ...prev, dateFrom }))}
-            placeholder="Data od"
-            minimumDate={startOfToday()}
-            icon="calendar-today"
-          />
-          <YmdDateField
-            value={form.dateTo}
-            onChange={(dateTo) => setForm((prev) => ({ ...prev, dateTo }))}
-            placeholder="Data do"
-            minimumDate={startOfToday()}
-            icon="event"
-          />
-          <Input
-            placeholder="Powód, np. serwis"
-            value={form.reason}
-            onChangeText={(reason) => setForm((prev) => ({ ...prev, reason }))}
-          />
-          <Button disabled={saveMutation.isPending} onPress={() => saveMutation.mutate()}>
-            <Text className="text-primary-foreground">Dodaj blokadę</Text>
-          </Button>
+          <Form {...form}>
+            <FormField
+              control={form.control}
+              name="dateFrom"
+              render={({ field, fieldState }) => (
+                <YmdDateField
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Data od"
+                  minimumDate={minDate}
+                  icon="calendar-today"
+                  error={fieldState.error?.message}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dateTo"
+              render={({ field, fieldState }) => (
+                <YmdDateField
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Data do"
+                  minimumDate={minDate}
+                  icon="event"
+                  error={fieldState.error?.message}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="reason"
+              render={({ field }) => (
+                <Input
+                  placeholder="Powód, np. serwis"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                />
+              )}
+            />
+            <Button disabled={saveMutation.isPending} onPress={submit}>
+              <Text className="text-primary-foreground">Dodaj blokadę</Text>
+            </Button>
+          </Form>
         </CardContent>
       </Card>
 

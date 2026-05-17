@@ -8,6 +8,7 @@ import { NotFoundRecipe } from '../recipes/not-found';
 import { BookingSection } from '@/src/domains/rentals';
 import { useProductDetail } from '../../application/hooks/use-product-detail';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Suspense } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -36,15 +37,24 @@ function ProductDetailScreenContent() {
 
   if (!equipment) {
     return (
-      <View className="flex-1 bg-background px-6 justify-center gap-4">
-        <NotFoundRecipe
-          title="Nie znaleziono sprzętu"
-          description="Ta oferta może już nie istnieć albo została ukryta."
+      <>
+        <Stack.Screen
+          options={{
+            title: 'Szczegóły sprzętu',
+            headerShown: true,
+            headerBackTitle: 'Wróć',
+          }}
         />
-        <Button variant="outline" onPress={goBack} className="self-start">
-          <Text>Wróć</Text>
-        </Button>
-      </View>
+        <View className="flex-1 bg-background px-6 justify-center gap-4">
+          <NotFoundRecipe
+            title="Nie znaleziono sprzętu"
+            description="Ta oferta może już nie istnieć albo została ukryta."
+          />
+          <Button variant="outline" onPress={goBack} className="self-start">
+            <Text>Wróć</Text>
+          </Button>
+        </View>
+      </>
     );
   }
 
@@ -52,25 +62,25 @@ function ProductDetailScreenContent() {
   const displayEquipmentName = equipmentName ? equipmentName.toUpperCase() : 'SPRZET';
 
   return (
-    <View className="flex-1 bg-background">
-      <View className="flex-row items-center gap-3 px-4 h-14 border-b border-border bg-card">
-        <Pressable onPress={goBack} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.foreground} />
-        </Pressable>
-        <Text className="text-foreground font-bold text-lg flex-1" numberOfLines={1}>
-          Szczegóły sprzętu
-        </Text>
-        <Pressable onPress={toggleFavorite} disabled={isFavoritePending} hitSlop={8}>
-          <MaterialIcons
-            name={isFavorite ? 'favorite' : 'favorite-border'}
-            size={24}
-            color={isFavorite ? colors.primary : colors.foreground}
-          />
-        </Pressable>
-      </View>
-
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Szczegóły sprzętu',
+          headerShown: true,
+          headerBackTitle: 'Wróć',
+          headerRight: () => (
+            <Pressable onPress={toggleFavorite} disabled={isFavoritePending} hitSlop={8}>
+              <MaterialIcons
+                name={isFavorite ? 'favorite' : 'favorite-border'}
+                size={24}
+                color={isFavorite ? colors.primary : colors.foreground}
+              />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView
-        className="px-4"
+        className="flex-1 bg-background px-4"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
@@ -127,9 +137,9 @@ function ProductDetailScreenContent() {
           equipmentId={equipment.id}
           pricePerDay={equipment.pricePerDay}
           deposit={equipment.deposit}
-          pickupAddress={equipment.address}
+          pickupAddress={equipment.address ?? ''}
         />
       </ScrollView>
-    </View>
+    </>
   );
 }

@@ -2,7 +2,7 @@ import { useAuth } from '@/src/shared/auth';
 import type { Equipment } from '@/src/shared/domain/equipment';
 import { deleteEquipment } from '../../infrastructure/commands';
 import { getMyEquipment } from '../../infrastructure/queries';
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 
 export function useMyEquipment() {
@@ -10,12 +10,10 @@ export function useMyEquipment() {
   const queryClient = useQueryClient();
   const ownerId = user?.userId;
 
-  const { data: myEquipment = [] } = useSuspenseQuery({
+  const { data: myEquipment = [], isPending } = useQuery({
     queryKey: ['equipment', 'mine', ownerId],
-    queryFn: () => {
-      if (ownerId == null) throw new Error('Nie jesteś zalogowany');
-      return getMyEquipment();
-    },
+    queryFn: () => getMyEquipment(),
+    enabled: ownerId != null,
   });
 
   const deleteMutation = useMutation({
@@ -36,5 +34,5 @@ export function useMyEquipment() {
     ]);
   }
 
-  return { myEquipment, confirmDelete };
+  return { myEquipment, confirmDelete, isPending: ownerId != null && isPending };
 }

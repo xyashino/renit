@@ -16,6 +16,7 @@ type Props = {
   minimumDate?: Date;
   icon?: keyof typeof MaterialIcons.glyphMap;
   className?: string;
+  error?: string;
 };
 
 function parseYmd(value: string, fallback: Date): Date {
@@ -35,7 +36,13 @@ export function YmdDateField({
   minimumDate,
   icon = 'calendar-today',
   className,
+  error,
 }: Props) {
+  const fieldClassName = cn(
+    'flex-row items-center bg-input border rounded-xl px-4 h-12',
+    error ? 'border-destructive' : 'border-border',
+    className
+  );
   const [iosOpen, setIosOpen] = useState(false);
   const fallbackDate = minimumDate ?? new Date();
   const parsed = parseYmd(value, fallbackDate);
@@ -43,12 +50,8 @@ export function YmdDateField({
 
   if (Platform.OS === 'web') {
     return (
-      <View
-        className={cn(
-          'flex-row items-center bg-input border border-border rounded-xl px-4 h-12 overflow-hidden',
-          className
-        )}
-      >
+      <View className="gap-1">
+      <View className={cn(fieldClassName, 'overflow-hidden')}>
         <MaterialIcons name={icon} size={18} color={T['muted-foreground']} />
         <View className="relative ml-2 flex-1 justify-center">
           <TextInput
@@ -67,19 +70,15 @@ export function YmdDateField({
           ) : null}
         </View>
       </View>
+      {error ? <Text variant="small" className="text-destructive">{error}</Text> : null}
+      </View>
     );
   }
 
   if (Platform.OS === 'ios') {
     return (
-      <>
-        <Pressable
-          className={cn(
-            'flex-row items-center bg-input border border-border rounded-xl px-4 h-12',
-            className
-          )}
-          onPress={() => setIosOpen(true)}
-        >
+      <View className="gap-1">
+        <Pressable className={fieldClassName} onPress={() => setIosOpen(true)}>
           <MaterialIcons name={icon} size={18} color={T['muted-foreground']} />
           <Text className={cn('ml-2', value ? 'text-foreground' : 'text-muted-foreground')}>
             {value || placeholder}
@@ -93,8 +92,7 @@ export function YmdDateField({
                 display="spinner"
                 value={parsed}
                 minimumDate={minimumDate}
-                onChange={(_, selectedDate) => {
-                  if (!selectedDate) return;
+                onValueChange={(_, selectedDate) => {
                   onChange(toUtcYmd(selectedDate));
                 }}
               />
@@ -104,23 +102,21 @@ export function YmdDateField({
             </Pressable>
           </Pressable>
         </Modal>
-      </>
+        {error ? <Text variant="small" className="text-destructive">{error}</Text> : null}
+      </View>
     );
   }
 
   return (
+    <View className="gap-1">
     <Pressable
-      className={cn(
-        'flex-row items-center bg-input border border-border rounded-xl px-4 h-12',
-        className
-      )}
+      className={fieldClassName}
       onPress={() => {
         DateTimePickerAndroid.open({
           mode: 'date',
           value: parsed,
           minimumDate,
-          onChange: (_, selectedDate) => {
-            if (!selectedDate) return;
+          onValueChange: (_, selectedDate) => {
             onChange(toUtcYmd(selectedDate));
           },
         });
@@ -131,5 +127,7 @@ export function YmdDateField({
         {value || placeholder}
       </Text>
     </Pressable>
+    {error ? <Text variant="small" className="text-destructive">{error}</Text> : null}
+    </View>
   );
 }

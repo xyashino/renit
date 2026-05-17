@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/src/shared/constants/config';
 import type { paths } from './generated/api';
-import { readAuthToken } from '@/src/shared/auth/infrastructure/session-storage';
+import { getAuthToken } from '@/src/shared/auth/infrastructure/secure-storage';
 import { ApiError } from '@/src/shared/api/errors';
 import createClient from 'openapi-fetch';
 
@@ -13,7 +13,7 @@ export const apiClient = createClient<paths>({
 
 apiClient.use({
   async onRequest({ request }) {
-    const token = await readAuthToken();
+    const token = await getAuthToken();
     if (token) {
       request.headers.set('Authorization', `Bearer ${token}`);
     }

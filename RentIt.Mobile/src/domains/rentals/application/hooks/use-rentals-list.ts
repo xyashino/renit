@@ -1,7 +1,7 @@
 import { filterClientRentals, filterOwnerRentals } from '../mappers/rental-list';
 import { getMyRentals } from '../../infrastructure/queries';
 import { useAuth } from '@/src/shared/auth';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { RentalTab } from '../../constants';
 import { filterRentalsByTab } from './rental-list-utils';
@@ -16,13 +16,13 @@ export function useRentalsList() {
   const activeTab: RentalTab =
     status === 'active' || status === 'pending' || status === 'history' ? status : 'active';
 
-  const { data: allRentals = [], isError, refetch } = useSuspenseQuery({
+  const { data: allRentals = [], isError, isPending, refetch } = useQuery({
     queryKey: ['rentals', isOwner ? 'owner' : 'client', userId],
     queryFn: async () => {
-      if (userId == null) throw new Error('Nie jesteś zalogowany');
       const rentals = await getMyRentals();
-      return isOwner ? filterOwnerRentals(rentals, userId) : filterClientRentals(rentals, userId);
+      return isOwner ? filterOwnerRentals(rentals, userId!) : filterClientRentals(rentals, userId!);
     },
+    enabled: userId != null,
   });
 
   const rentals = filterRentalsByTab(allRentals, activeTab);
@@ -31,5 +31,5 @@ export function useRentalsList() {
     router.setParams({ status: tab });
   }
 
-  return { activeTab, handleTabChange, rentals, isError, refetch, isOwner };
+  return { activeTab, handleTabChange, rentals, isError, isPending, refetch, isOwner };
 }

@@ -1,13 +1,13 @@
-import { RENTAL_DURATION_OPTIONS } from '../../constants';
+import { RENTAL_BOOKING_HORIZON_DAYS, RENTAL_MIN_DURATION_DAYS } from '../../constants';
 import { z } from 'zod';
 
 const durationSchema = z
   .number()
-  .int()
-  .refine(
-    (value): value is (typeof RENTAL_DURATION_OPTIONS)[number] =>
-      (RENTAL_DURATION_OPTIONS as readonly number[]).includes(value),
-    'Wybierz czas wypożyczenia'
+  .int('Podaj liczbę całkowitą dni')
+  .min(RENTAL_MIN_DURATION_DAYS, `Minimum ${RENTAL_MIN_DURATION_DAYS} dzień`)
+  .max(
+    RENTAL_BOOKING_HORIZON_DAYS,
+    `Maksymalnie ${RENTAL_BOOKING_HORIZON_DAYS} dni w jednej rezerwacji`
   );
 
 export type NewRentalFormData = {

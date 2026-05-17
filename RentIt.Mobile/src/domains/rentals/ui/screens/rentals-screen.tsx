@@ -3,7 +3,6 @@ import { cn } from '@/src/shared/utils';
 import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
 import { ErrorAlertRecipe } from '@/src/shared/ui/recipes/error-alert';
 import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
-import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
 import { useRentalsList } from '../../application/hooks/use-rentals-list';
 import { RENTAL_TABS, type RentalTab } from '../../constants';
 import {
@@ -12,20 +11,11 @@ import {
   rentalDetailHref,
 } from '../../constants';
 import { useRouter } from 'expo-router';
-import { Suspense } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/card';
 
 export function RentalsScreen() {
-  return (
-    <Suspense fallback={<StartupSplashScreen />}>
-      <RentalsScreenContent />
-    </Suspense>
-  );
-}
-
-function RentalsScreenContent() {
-  const { activeTab, handleTabChange, rentals, isError, refetch, isOwner } = useRentalsList();
+  const { activeTab, handleTabChange, rentals, isError, isPending, refetch, isOwner } = useRentalsList();
   const router = useRouter();
   const copy = isOwner ? RENTALS_SCREEN_OWNER : RENTALS_SCREEN_CLIENT;
 
@@ -61,7 +51,11 @@ function RentalsScreenContent() {
       </View>
 
       <View className="px-6 gap-4">
-        {isError ? (
+        {isPending ? (
+          <View className="py-12 items-center justify-center">
+            <ActivityIndicator />
+          </View>
+        ) : isError ? (
           <ErrorAlertRecipe
             title={copy.errorTitle}
             description={copy.errorDesc}

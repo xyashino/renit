@@ -1,10 +1,9 @@
 import { Button } from '@/src/shared/ui/components/button';
 import { Text } from '@/src/shared/ui/components/text';
-import { AuthProvider } from '@/src/shared/auth';
+import { AuthProvider, useAuth } from '@/src/shared/auth';
 import { PortalHost } from '@rn-primitives/portal';
 import { isUnauthorizedError } from '@/src/shared/api/errors';
-import { AUTH_USER_QUERY_KEY } from '@/src/shared/auth/constants';
-import { clearAuthToken } from '@/src/shared/auth/infrastructure/session-storage';
+import { notifyUnauthorized } from '@/src/shared/auth/infrastructure/auth-events';
 import {
   MutationCache,
   QueryCache,
@@ -12,24 +11,19 @@ import {
   QueryClientProvider,
   useQueryErrorResetBoundary,
 } from '@tanstack/react-query';
-import { ErrorBoundaryProps, router, Stack } from 'expo-router';
+import { ErrorBoundaryProps, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-import React from "react";
+import React from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 import { THEME } from '@/src/shared/constants/theme';
 import '../styles/global.css';
 
-function handleQueryError(error: unknown, queryClient: QueryClient): void {
+function handleQueryError(error: unknown): void {
   console.error(error);
   if (!isUnauthorizedError(error)) return;
-
-  void (async () => {
-    await clearAuthToken();
-    queryClient.setQueryData(AUTH_USER_QUERY_KEY, null);
-    router.replace('/');
-  })();
+  notifyUnauthorized();
 }
 
 function createQueryClient() {
@@ -41,10 +35,10 @@ function createQueryClient() {
       },
     },
     queryCache: new QueryCache({
-      onError: (error) => handleQueryError(error, queryClient),
+      onError: handleQueryError,
     }),
     mutationCache: new MutationCache({
-      onError: (error) => handleQueryError(error, queryClient),
+      onError: handleQueryError,
     }),
   });
 
@@ -53,35 +47,56 @@ function createQueryClient() {
 
 const queryClient = createQueryClient();
 
-export default function RootLayout() {
+function RootNavigator() {
+  const { user, isLoading } = useAuth();
   const { colorScheme = 'light' } = useColorScheme();
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = THEME[scheme];
+  const isAuthenticated = !!user;
+  const isClient = user?.accountType === 'client';
+  const isOwner = user?.accountType === 'owner';
 
+  return (
+    <>
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: colors.card,
+          },
+          headerTitleStyle: {
+            color: colors.foreground,
+            fontWeight: '700',
+            fontSize: 18,
+          },
+          headerTitleAlign: 'center',
+          headerShadowVisible: false,
+          headerTintColor: colors.foreground,
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+
+        <Stack.Protected guard={!isLoading && !isAuthenticated}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!isLoading && isAuthenticated && isClient}>
+          <Stack.Screen name="client" options={{ headerShown: false }} />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!isLoading && isAuthenticated && isOwner}>
+          <Stack.Screen name="owner" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+    </>
+  );
+}
+
+export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: colors.card,
-            },
-            headerTitleStyle: {
-              color: colors.foreground,
-              fontWeight: '700',
-              fontSize: 18,
-            },
-            headerTitleAlign: 'center',
-            headerShadowVisible: false,
-            headerTintColor: colors.foreground,
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="client" options={{ headerShown: false }} />
-          <Stack.Screen name="owner" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <RootNavigator />
       </AuthProvider>
       <PortalHost />
     </QueryClientProvider>

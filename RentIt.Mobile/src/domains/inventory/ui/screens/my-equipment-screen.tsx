@@ -8,21 +8,21 @@ import {
   equipmentRentalsHref,
 } from '../../constants';
 import { router } from 'expo-router';
-import { Suspense } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { ListCard } from '../components/list-card';
-import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
+import { useAuth } from '@/src/shared/auth';
 
 export function MyEquipmentScreen() {
-  return (
-    <Suspense fallback={<StartupSplashScreen />}>
-      <MyEquipmentScreenContent />
-    </Suspense>
-  );
-}
+  const { user, isLoading: authLoading } = useAuth();
+  const { myEquipment, confirmDelete, isPending } = useMyEquipment();
 
-function MyEquipmentScreenContent() {
-  const { myEquipment, confirmDelete } = useMyEquipment();
+  if (authLoading || (user != null && isPending)) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-background">

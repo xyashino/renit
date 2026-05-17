@@ -1,53 +1,68 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createElement, useCallback, type ReactNode } from 'react';
+import { createElement, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { AUTH_USER_QUERY_KEY } from '../../constants';
-import { fetchAuthSession } from '../../infrastructure/queries';
-import { authSessionFromPayload } from '../../infrastructure/session';
-import { clearAuthToken, writeAuthToken } from '../../infrastructure/session-storage';
+import type { ApiSessionPayload, AuthSession, AuthUser } from '../../domain/types';
+import { registerUnauthorizedHandler } from '../../infrastructure/auth-events';
+import { authSessionFromPayload, fetchAuthUser } from '../../infrastructure/session';
 import { AuthContext } from '../context/auth-context';
-import type { ApiSessionPayload } from '../../domain/types';
+import { useStorageState } from '../hooks/use-storage-state';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [[isTokenLoading, token], setToken] = useStorageState();
 
-  const sessionQuery = useQuery({
+  const userQuery = useQuery({
     queryKey: AUTH_USER_QUERY_KEY,
-    queryFn: fetchAuthSession,
-    staleTime: 60_000,
+    queryFn: fetchAuthUser,
+    enabled: !isTokenLoading && !!token,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
     retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  const setSession = useCallback(
-    async (input: ApiSessionPayload) => {
-      await writeAuthToken(input.token);
-      const session = authSessionFromPayload(input);
-      queryClient.setQueryData(AUTH_USER_QUERY_KEY, session);
-      return session;
-    },
-    [queryClient],
-  );
+  useEffect(() => {
+    if (!token || !userQuery.isFetched) return;
+    if (userQuery.data) return;
+    setToken(null);
+    queryClient.setQueryData(AUTH_USER_QUERY_KEY, null);
+  }, [token, userQuery.data, userQuery.isFetched, setToken, queryClient]);
 
   const clearSession = useCallback(async () => {
-    await clearAuthToken();
+    setToken(null);
     queryClient.setQueryData(AUTH_USER_QUERY_KEY, null);
     queryClient.removeQueries({
       predicate: (query) => query.queryKey[0] !== AUTH_USER_QUERY_KEY[0],
     });
-  }, [queryClient]);
+  }, [queryClient, setToken]);
 
-  const session = sessionQuery.data ?? null;
+  useEffect(() => registerUnauthorizedHandler(clearSession), [clearSession]);
 
-  return createElement(
-    AuthContext.Provider,
-    {
-      value: {
-        user: session?.user ?? null,
-        token: session?.token ?? null,
-        isLoading: sessionQuery.isLoading,
-        setSession,
-        clearSession,
-      },
+  const setSession = useCallback(
+    async (input: ApiSessionPayload) => {
+      const session = authSessionFromPayload(input);
+      setToken(session.token);
+      queryClient.setQueryData<AuthUser | null>(AUTH_USER_QUERY_KEY, session.user);
+      return session;
     },
-    children,
+    [queryClient, setToken],
   );
+
+  const user = token ? (userQuery.data ?? null) : null;
+  const isLoading = isTokenLoading || (!!token && userQuery.isPending);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token: token ?? null,
+      isLoading,
+      setSession,
+      clearSession,
+    }),
+    [user, token, isLoading, setSession, clearSession],
+  );
+
+  return createElement(AuthContext.Provider, { value }, children);
 }

@@ -6,28 +6,32 @@ import {
   type AvailabilityBlockFormData,
 } from '../schemas/forms';
 import { toIsoDate } from '../utils/dates';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
 
 export function useAvailabilityBlockForm(equipmentId: number, blocksQueryKey: readonly unknown[]) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<AvailabilityBlockFormData>(emptyAvailabilityBlockForm);
+
+  const form = useForm<AvailabilityBlockFormData>({
+    resolver: zodResolver(availabilityBlockFormSchema),
+    defaultValues: emptyAvailabilityBlockForm,
+  });
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      const parsed = availabilityBlockFormSchema.parse(form);
+    mutationFn: async (data: AvailabilityBlockFormData) => {
       await createAvailabilityBlock({
         equipmentId,
-        dateFrom: toIsoDate(parsed.dateFrom),
-        dateTo: toIsoDate(parsed.dateTo),
-        reason: parsed.reason.trim(),
+        dateFrom: toIsoDate(data.dateFrom),
+        dateTo: toIsoDate(data.dateTo),
+        reason: data.reason.trim(),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: blocksQueryKey });
       queryClient.invalidateQueries({ queryKey: ['equipment'] });
-      setForm(emptyAvailabilityBlockForm);
+      form.reset(emptyAvailabilityBlockForm);
     },
     onError: (error) => {
       Alert.alert('Błąd', error instanceof Error ? error.message : 'Spróbuj ponownie');
@@ -54,7 +58,7 @@ export function useAvailabilityBlockForm(equipmentId: number, blocksQueryKey: re
 
   return {
     form,
-    setForm,
+    submit: form.handleSubmit((data) => saveMutation.mutate(data)),
     saveMutation,
     confirmDelete,
   };

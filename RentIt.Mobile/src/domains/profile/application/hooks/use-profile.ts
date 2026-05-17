@@ -1,4 +1,4 @@
-import { AUTH_USER_QUERY_KEY, ROUTES, useAuth } from '@/src/shared/auth';
+import { AUTH_USER_QUERY_KEY, useAuth } from '@/src/shared/auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
@@ -51,7 +51,7 @@ export function useProfile() {
 
   async function onLogout() {
     await clearSession();
-    router.replace(ROUTES.SIGN_IN);
+    router.replace('/');
     Alert.alert('Wylogowano');
   }
 

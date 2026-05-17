@@ -48,17 +48,16 @@ export function CategoryMultiSelect({
         {options.map((category) => {
           const selected = value.includes(category.id);
           return (
-            <Pressable
-              key={category.id}
-              onPress={() => toggleCategory(category.id)}
-              disabled={disabled}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: selected, disabled }}
-            >
-              <Badge variant={selected ? 'default' : 'outline'}>
+            <Badge key={category.id} variant={selected ? 'default' : 'outline'} asChild>
+              <Pressable
+                onPress={() => toggleCategory(category.id)}
+                disabled={disabled}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected, disabled }}
+              >
                 <Text>{category.label}</Text>
-              </Badge>
-            </Pressable>
+              </Pressable>
+            </Badge>
           );
         })}
       </View>

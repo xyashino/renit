@@ -4,7 +4,7 @@ import { cn } from '@/src/shared/utils';
 import * as SelectPrimitive from '@rn-primitives/select';
 import { Check, ChevronDown, ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
 import * as React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Dimensions, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
@@ -73,16 +73,69 @@ function SelectTrigger({
 
 const FullWindowOverlay = Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
 
+const NATIVE_SELECT_SIDE_OFFSET = 4;
+const NATIVE_SELECT_MAX_HEIGHT = 280;
+const NATIVE_SELECT_BOTTOM_INSET = 16;
+
+function useNativeSelectContentStyle() {
+  const { triggerPosition } = SelectPrimitive.useRootContext();
+
+  return React.useMemo(() => {
+    if (Platform.OS === 'web' || !triggerPosition) return undefined;
+
+    const { height: screenHeight } = Dimensions.get('window');
+    const spaceBelow =
+      screenHeight -
+      triggerPosition.pageY -
+      triggerPosition.height -
+      NATIVE_SELECT_SIDE_OFFSET -
+      NATIVE_SELECT_BOTTOM_INSET;
+    const maxHeight = Math.max(160, Math.min(NATIVE_SELECT_MAX_HEIGHT, spaceBelow));
+
+    return {
+      width: triggerPosition.width,
+      maxHeight,
+    } as const;
+  }, [
+    triggerPosition?.pageX,
+    triggerPosition?.pageY,
+    triggerPosition?.width,
+    triggerPosition?.height,
+  ]);
+}
+
 function SelectContent({
   className,
   children,
   position = 'popper',
   portalHost,
+  side,
+  align,
+  sideOffset,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content> & {
     className?: string;
     portalHost?: string;
   }) {
+  const isNative = Platform.OS !== 'web';
+  const nativeContentStyle = useNativeSelectContentStyle();
+
+  const viewport = (
+    <SelectPrimitive.Viewport
+      className={cn(
+        'p-1',
+        position === 'popper' &&
+          cn(
+            'w-full',
+            Platform.select({
+              web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
+            })
+          )
+      )}>
+      {children}
+    </SelectPrimitive.Viewport>
+  );
+
   return (
     <SelectPrimitive.Portal hostName={portalHost}>
       <FullWindowOverlay>
@@ -98,7 +151,7 @@ function SelectContent({
                       props.side === 'bottom' && 'slide-in-from-top-2',
                       props.side === 'top' && 'slide-in-from-bottom-2'
                     ),
-                    native: 'p-1',
+                    native: 'overflow-hidden p-0',
                   }),
                   position === 'popper' &&
                   Platform.select({
@@ -110,21 +163,24 @@ function SelectContent({
                   className
                 )}
                 position={position}
+                side={side ?? (isNative ? 'bottom' : undefined)}
+                align={align ?? (isNative ? 'start' : undefined)}
+                sideOffset={sideOffset ?? (isNative ? NATIVE_SELECT_SIDE_OFFSET : undefined)}
+                style={isNative ? nativeContentStyle : undefined}
                 {...props}>
                 <SelectScrollUpButton />
-                <SelectPrimitive.Viewport
-                  className={cn(
-                    'p-1',
-                    position === 'popper' &&
-                    cn(
-                      'w-full',
-                      Platform.select({
-                        web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
-                      })
-                    )
-                  )}>
-                  {children}
-                </SelectPrimitive.Viewport>
+                {isNative ? (
+                  <ScrollView
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator
+                    style={nativeContentStyle?.maxHeight ? { maxHeight: nativeContentStyle.maxHeight } : undefined}
+                  >
+                    {viewport}
+                  </ScrollView>
+                ) : (
+                  viewport
+                )}
                 <SelectScrollDownButton />
               </SelectPrimitive.Content>
             </NativeOnlyAnimatedView>

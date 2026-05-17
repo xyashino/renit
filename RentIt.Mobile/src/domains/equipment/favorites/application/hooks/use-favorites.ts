@@ -1,14 +1,15 @@
 import { useAuth } from '@/src/shared/auth';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getFavorites } from '../../infrastructure/queries';
 
 export function useFavorites() {
   const { user } = useAuth();
 
-  const { data: favorites = [], isError, refetch } = useSuspenseQuery({
+  const { data: favorites = [], isError, isPending, refetch } = useQuery({
     queryKey: ['favorites', user?.userId],
     queryFn: () => getFavorites(),
+    enabled: user?.userId != null,
   });
 
-  return { favorites, isError, refetch };
+  return { favorites, isError, isPending: user?.userId != null && isPending, refetch };
 }

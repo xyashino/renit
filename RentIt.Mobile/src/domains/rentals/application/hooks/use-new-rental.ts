@@ -7,11 +7,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
-import {
-  RENTAL_BOOKING_HORIZON_DAYS,
-  RENTAL_DURATION_OPTIONS,
-  rentalConfirmedHref,
-} from '../../constants';
+import { RENTAL_BOOKING_HORIZON_DAYS, rentalConfirmedHref } from '../../constants';
 import { computeAvailableSlots } from '../../domain/availability';
 import { rentalPeriodFromDuration } from '../../domain/rental-period';
 import { createRental } from '../../infrastructure/commands';
@@ -21,13 +17,14 @@ import { useRentalBookingSlots } from './use-rental-booking-slots';
 type UseNewRentalOptions = {
   equipmentId: number;
   pricePerDay: number;
-  pickupAddress: string;
+  pickupAddress?: string;
 };
 
 export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNewRentalOptions) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const pickupAddressNormalized = (pickupAddress ?? '').trim();
 
   const form = useForm<NewRentalFormData>({
     resolver: zodResolver(newRentalSchema),
@@ -53,7 +50,7 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
 
   const canSubmit =
     !!user &&
-    !!pickupAddress.trim() &&
+    !!pickupAddressNormalized &&
     !!period &&
     availableSlots.some((slot) => slot.dateFrom === dateFrom) &&
     !slotsLoading &&
@@ -62,7 +59,7 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
   const mutation = useMutation({
     mutationFn: async (payload: NewRentalFormData) => {
       if (!user) throw new Error('Nie jesteś zalogowany');
-      if (!pickupAddress.trim()) throw new Error('Brak adresu odbioru u właściciela');
+      if (!pickupAddressNormalized) throw new Error('Brak adresu odbioru u właściciela');
 
       const data = newRentalSchema.parse(payload);
       const rentalPeriod = rentalPeriodFromDuration(data.dateFrom, data.durationDays);
@@ -85,7 +82,7 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
         equipmentId,
         dateFrom: rentalPeriod.dateFromIso,
         dateTo: rentalPeriod.dateToIso,
-        notes: data.notes.trim(),
+        notes: (data.notes ?? '').trim(),
       });
     },
     onSuccess: (rental) => {
@@ -98,22 +95,12 @@ export function useNewRental({ equipmentId, pricePerDay, pickupAddress }: UseNew
     },
   });
 
-  const durationOptions = useMemo(
-    () =>
-      RENTAL_DURATION_OPTIONS.map((days) => ({
-        value: String(days),
-        label: `${days} ${days === 1 ? 'dzień' : 'dni'}`,
-      })),
-    []
-  );
-
   return {
     form,
     period,
     days,
     totalPrice,
     availableSlots,
-    durationOptions,
     slotsLoading,
     slotsError,
     canSubmit,

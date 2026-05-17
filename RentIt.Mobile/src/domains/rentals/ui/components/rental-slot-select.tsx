@@ -1,14 +1,15 @@
+import { Input } from '@/src/shared/ui/components/input';
 import { Text } from '@/src/shared/ui/components/text';
 import { SelectField, type SelectFieldOption } from './select-field';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { RENTAL_BOOKING_HORIZON_DAYS } from '../../constants';
+import { RENTAL_BOOKING_HORIZON_DAYS, RENTAL_MIN_DURATION_DAYS } from '../../constants';
 import type { RentalSlot } from '../../domain/availability';
-import { addUtcDays, formatDate, parseDate, toUtcYmd } from '../../domain/dates';
+import { formatSlotLabel, slotInclusiveEndYmd } from '../../domain/dates';
 
 type Props = {
   durationDays: number;
   dateFrom: string;
-  durationOptions: SelectFieldOption[];
   availableSlots: RentalSlot[];
   onDurationChange: (days: number) => void;
   onDateFromChange: (ymd: string) => void;
@@ -17,22 +18,61 @@ type Props = {
   disabled?: boolean;
 };
 
-function slotOptions(slots: RentalSlot[]): SelectFieldOption[] {
-  return slots.map((slot) => {
-    const exclusiveEnd = parseDate(slot.dateTo);
-    const lastYmd = exclusiveEnd ? toUtcYmd(addUtcDays(exclusiveEnd, -1)) : slot.dateTo;
+function DurationDaysInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (days: number) => void;
+  disabled?: boolean;
+}) {
+  const [text, setText] = useState(String(value));
 
-    return {
-      value: slot.dateFrom,
-      label: `${formatDate(slot.dateFrom)} – ${formatDate(lastYmd)}`,
-    };
-  });
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  return (
+    <Input
+      className="h-12 bg-card"
+      placeholder="1"
+      keyboardType="number-pad"
+      inputMode="numeric"
+      editable={!disabled}
+      value={text}
+      onChangeText={(raw) => {
+        const digits = raw.replace(/\D/g, '');
+        setText(digits);
+        if (digits === '') return;
+        const parsed = parseInt(digits, 10);
+        if (!Number.isNaN(parsed)) {
+          onChange(Math.max(RENTAL_MIN_DURATION_DAYS, parsed));
+        }
+      }}
+      onBlur={() => {
+        const parsed = parseInt(text, 10);
+        const next =
+          !text || Number.isNaN(parsed) || parsed < RENTAL_MIN_DURATION_DAYS
+            ? RENTAL_MIN_DURATION_DAYS
+            : parsed;
+        setText(String(next));
+        onChange(next);
+      }}
+    />
+  );
+}
+
+function slotOptions(slots: RentalSlot[]): SelectFieldOption[] {
+  return slots.map((slot) => ({
+    value: slot.dateFrom,
+    label: formatSlotLabel(slot.dateFrom, slotInclusiveEndYmd(slot)),
+  }));
 }
 
 export function RentalSlotSelect({
   durationDays,
   dateFrom,
-  durationOptions,
   availableSlots,
   onDurationChange,
   onDateFromChange,
@@ -61,15 +101,15 @@ export function RentalSlotSelect({
   return (
     <View className="gap-3">
       <View className="gap-1.5">
-        <Text className="text-foreground text-sm font-medium">Czas wypożyczenia</Text>
-        <SelectField
-          placeholder="Wybierz liczbę dni"
-          selectedValue={String(durationDays)}
-          options={durationOptions}
-          onValueChange={(value) => onDurationChange(Number(value))}
+        <Text className="text-foreground text-sm font-medium">Czas wypożyczenia (dni)</Text>
+        <DurationDaysInput
+          value={durationDays}
+          onChange={onDurationChange}
           disabled={disabled}
-          triggerClassName="h-12 bg-card"
         />
+        <Text className="text-muted-foreground text-xs">
+          Liczba całkowita, minimum {RENTAL_MIN_DURATION_DAYS} dzień.
+        </Text>
       </View>
 
       <View className="gap-1.5">

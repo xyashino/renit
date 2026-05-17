@@ -26,7 +26,6 @@ export function BookingSection({
     days,
     totalPrice,
     availableSlots,
-    durationOptions,
     slotsLoading,
     slotsError,
     canSubmit,
@@ -45,7 +44,6 @@ export function BookingSection({
       <RentalSlotSelect
         durationDays={durationDays}
         dateFrom={dateFrom}
-        durationOptions={durationOptions}
         availableSlots={availableSlots}
         onDurationChange={(value) =>
           form.setValue('durationDays', value, { shouldValidate: true })

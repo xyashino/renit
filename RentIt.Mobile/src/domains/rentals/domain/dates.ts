@@ -23,6 +23,32 @@ export function formatDate(dateStr: string, options?: Intl.DateTimeFormatOptions
   return parsed.toDate().toLocaleDateString('pl-PL', options ?? { day: 'numeric', month: 'short' });
 }
 
+/** Etykieta zakresu terminu (np. „środa, 22 maja” lub „22–25 maja”). */
+export function formatSlotLabel(dateFrom: string, dateToInclusive: string): string {
+  if (dateFrom === dateToInclusive) {
+    return formatDate(dateFrom, { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  const from = dayjs(dateFrom);
+  const to = dayjs(dateToInclusive);
+  if (!from.isValid() || !to.isValid()) {
+    return `${formatDate(dateFrom)} – ${formatDate(dateToInclusive)}`;
+  }
+
+  if (from.year() === to.year() && from.month() === to.month()) {
+    const month = from.toDate().toLocaleDateString('pl-PL', { month: 'long' });
+    return `${from.date()}–${to.date()} ${month}`;
+  }
+
+  return `${formatDate(dateFrom)} – ${formatDate(dateToInclusive)}`;
+}
+
+export function slotInclusiveEndYmd(slot: { dateFrom: string; dateTo: string }): string {
+  const exclusiveEnd = parseDate(slot.dateTo);
+  if (!exclusiveEnd) return slot.dateTo;
+  return toUtcYmd(addUtcDays(exclusiveEnd, -1));
+}
+
 export function toLocalYmd(date: Date): string {
   return dayjs(date).format('YYYY-MM-DD');
 }

@@ -1,24 +1,24 @@
 import { EmptyStateRecipe } from '@/src/shared/ui/recipes/empty-state';
 import { ScreenHeader } from '@/src/shared/ui/recipes/screen-header';
-import { StartupSplashScreen } from '@/src/shared/ui/screens/startup-splash-screen';
-import { Suspense } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useAuth } from '@/src/shared/auth';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { useFavorites } from '../../favorites/application/hooks/use-favorites';
 import { equipmentDetailHref } from '../../constants';
 import { useRouter } from 'expo-router';
 import { Card } from '../recipes/card';
 
 export function FavoritesScreen() {
-  return (
-    <Suspense fallback={<StartupSplashScreen />}>
-      <FavoritesScreenContent />
-    </Suspense>
-  );
-}
-
-function FavoritesScreenContent() {
   const router = useRouter();
-  const { favorites } = useFavorites();
+  const { user, isLoading: authLoading } = useAuth();
+  const { favorites, isPending } = useFavorites();
+
+  if (authLoading || (user != null && isPending)) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <ScrollView

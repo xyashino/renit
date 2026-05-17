@@ -24,15 +24,11 @@ export function BrowseScreen() {
         description="Przeglądaj dostępny sprzęt i wybierz kategorię."
       />
 
-      <View className="pb-2">
-        <Text className="text-foreground font-bold text-base mb-4 px-6">
+      <View className="pb-2 px-6">
+        <Text className="text-foreground font-bold text-base mb-4">
           Kategorie
         </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
-        >
+        <View className="flex-row flex-wrap gap-3">
           {categories.map((cat) => {
             const active = categoryId === cat.id;
             return (
@@ -49,7 +45,7 @@ export function BrowseScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       {isPending ? (
